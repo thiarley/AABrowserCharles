@@ -9,7 +9,9 @@ Transform your "parked time" with a sleek, modern browser designed specifically 
 
 > [!CAUTION]
 > **Beware of Fake Websites**
-> Fake websites impersonating AA Browser have appeared. **This GitHub repository is the ONLY official source.** To prevent malware infections and financial damage, absolutely do not trust or download from any other websites.
+> Fake websites impersonating AA Browser have appeared. **This GitHub repository (https://github.com/kododake/AABrowser) is the ONLY official source.** To prevent malware infections and financial damage, absolutely do not trust or download from any other websites.
+
+
 
 > [!NOTE]
 > **Requires Android 15 or later**
