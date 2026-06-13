@@ -1114,7 +1114,6 @@ object SettingsViews {
                 WebStorage.getInstance().deleteAllData()
                 WebViewDatabase.getInstance(context).apply {
                     clearHttpAuthUsernamePassword()
-                    clearFormData()
                 }
                 runCatching { context.deleteDatabase("webview.db") }
                 runCatching { context.deleteDatabase("webviewCache.db") }

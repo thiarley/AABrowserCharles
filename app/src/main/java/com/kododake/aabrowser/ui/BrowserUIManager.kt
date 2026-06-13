@@ -347,7 +347,7 @@ class BrowserUIManager(
     fun showKeyboard(view: View) {
         val imm = activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         view.post { 
-            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT) 
+            imm.showSoftInput(view, 0) 
         }
     }
 
