@@ -19,6 +19,12 @@ object BrowserPreferences {
         val title: String?
     )
 
+    @Volatile
+    private var cachedBookmarks: List<String>? = null
+
+    @Volatile
+    private var cachedStartPageSlots: List<String?>? = null
+
     private const val PREFS_NAME = "browser_prefs"
     private const val KEY_LAST_URL = "last_url"
     private const val KEY_DESKTOP_MODE = "desktop_mode"
@@ -40,21 +46,22 @@ object BrowserPreferences {
     private const val KEY_START_PAGE_SLOTS = "start_page_slots"
     private const val KEY_START_PAGE_BACKGROUND_URI = "start_page_background_uri"
     private const val KEY_HOME_PAGE_URL = "home_page_url"
+    private const val KEY_ALLOWED_LOCATION_HOSTS = "allowed_location_hosts"
+    private const val KEY_HIDE_SPONSORS = "hide_sponsors"
     private const val DEFAULT_URL = "https://www.google.com"
     private const val SEARCH_TEMPLATE = "https://www.google.com/search?q=%s"
 
     private val DEFAULT_BOOKMARKS = listOf(
         "https://www.google.com",
         "https://youtube.com",
-        "https://www.twitch.tv",
-        "https://kick.com",
+        "https://duckduckgo.com",
         "https://weather.com",
         "https://keepandroidopen.org"
     )
 
     const val MAX_START_PAGE_SITES = 6
     const val MAX_OPEN_TABS = 8
-    const val MIN_GLOBAL_SCALE_PERCENT = 60
+    const val MIN_GLOBAL_SCALE_PERCENT = 40
     const val MAX_GLOBAL_SCALE_PERCENT = 200
     const val DEFAULT_GLOBAL_SCALE_PERCENT = 100
 
@@ -369,12 +376,23 @@ object BrowserPreferences {
     }
 
     fun getBookmarks(context: Context): List<String> {
+        val cached = cachedBookmarks
+        if (cached != null) return cached
+
         val bookmarks = loadBookmarks(context)
-        if (bookmarks.isEmpty()) {
+        val result = if (bookmarks.isEmpty()) {
             persistBookmarks(context, DEFAULT_BOOKMARKS)
-            return DEFAULT_BOOKMARKS
+            DEFAULT_BOOKMARKS
+        } else {
+            bookmarks
         }
-        return bookmarks
+        cachedBookmarks = result
+        return result
+    }
+
+    fun setBookmarks(context: Context, bookmarks: List<String>) {
+        cachedBookmarks = bookmarks
+        persistBookmarks(context, bookmarks)
     }
 
     fun addBookmark(context: Context, url: String): Boolean {
@@ -385,6 +403,7 @@ object BrowserPreferences {
         }
         val updated = mutableListOf(navigable)
         updated.addAll(bookmarks)
+        cachedBookmarks = updated
         persistBookmarks(context, updated)
         return true
     }
@@ -393,6 +412,7 @@ object BrowserPreferences {
         val bookmarks = loadBookmarks(context).toMutableList()
         val removed = bookmarks.remove(url)
         if (removed) {
+            cachedBookmarks = bookmarks
             persistBookmarks(context, bookmarks)
             val slotIndex = findStartPageSlot(context, url)
             if (slotIndex >= 0) {
@@ -403,8 +423,13 @@ object BrowserPreferences {
     }
 
     fun getStartPageSlots(context: Context): List<String?> {
+        val cached = cachedStartPageSlots
+        if (cached != null) return cached
+
         val slots = loadStartPageSlots(context)
-        return slots.map { it.ifBlank { null } }
+        val result = slots.map { it.ifBlank { null } }
+        cachedStartPageSlots = result
+        return result
     }
 
     fun getStartPageSites(context: Context): List<String> {
@@ -425,6 +450,7 @@ object BrowserPreferences {
         if (normalized.isBlank()) {
             slots[index] = ""
             persistStartPageSlots(context, slots)
+            cachedStartPageSlots = slots.map { it.ifBlank { null } }
             return
         }
 
@@ -437,6 +463,7 @@ object BrowserPreferences {
         }
         slots[index] = navigable
         persistStartPageSlots(context, slots)
+        cachedStartPageSlots = slots.map { it.ifBlank { null } }
     }
 
     fun clearStartPageSlot(context: Context, index: Int) {
@@ -488,6 +515,14 @@ object BrowserPreferences {
         addAllowedHost(context, KEY_ALLOWED_CLEAR_HOSTS, host)
     }
 
+    fun isHostAllowedLocation(context: Context, host: String?): Boolean {
+        return isHostAllowed(context, KEY_ALLOWED_LOCATION_HOSTS, host)
+    }
+
+    fun addAllowedLocationHost(context: Context, host: String) {
+        addAllowedHost(context, KEY_ALLOWED_LOCATION_HOSTS, host)
+    }
+
     fun isHostAllowedMicrophone(context: Context, host: String?): Boolean {
         return isHostAllowed(context, KEY_ALLOWED_MICROPHONE_HOSTS, host)
     }
@@ -499,8 +534,20 @@ object BrowserPreferences {
     fun clearSavedSitePermissions(context: Context) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
-            .remove(KEY_ALLOWED_CLEAR_HOSTS)
             .remove(KEY_ALLOWED_MICROPHONE_HOSTS)
+            .remove(KEY_ALLOWED_LOCATION_HOSTS)
+            .apply()
+
+        context.getSharedPreferences("client_cert_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .apply()
+    }
+
+    fun clearAllowedCleartextHosts(context: Context) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .remove(KEY_ALLOWED_CLEAR_HOSTS)
             .apply()
     }
 
@@ -560,6 +607,11 @@ object BrowserPreferences {
     }
 
     private fun loadStartPageSlots(context: Context): MutableList<String> {
+        val cached = cachedStartPageSlots
+        if (cached != null) {
+            return cached.map { it ?: "" }.toMutableList()
+        }
+
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val serialized = prefs.getString(KEY_START_PAGE_SLOTS, null)
         if (serialized.isNullOrBlank()) {
@@ -567,6 +619,7 @@ object BrowserPreferences {
                 DEFAULT_BOOKMARKS.getOrElse(index) { "" }
             }
             persistStartPageSlots(context, defaults)
+            cachedStartPageSlots = defaults.map { it.ifBlank { null } }
             return defaults
         }
 
@@ -583,11 +636,14 @@ object BrowserPreferences {
             if (storedLength < MAX_START_PAGE_SITES) {
                 persistStartPageSlots(context, slots)
             }
+            cachedStartPageSlots = slots.map { it.ifBlank { null } }
             slots
         }.getOrElse {
-            MutableList(MAX_START_PAGE_SITES) { index ->
+            val defaults = MutableList(MAX_START_PAGE_SITES) { index ->
                 DEFAULT_BOOKMARKS.getOrElse(index) { "" }
             }
+            cachedStartPageSlots = defaults.map { it.ifBlank { null } }
+            defaults
         }
     }
 
@@ -602,6 +658,18 @@ object BrowserPreferences {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putString(KEY_START_PAGE_SLOTS, array.toString())
+            .apply()
+    }
+
+    fun shouldHideSponsors(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_HIDE_SPONSORS, false)
+    }
+
+    fun setHideSponsors(context: Context, hide: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_HIDE_SPONSORS, hide)
             .apply()
     }
 

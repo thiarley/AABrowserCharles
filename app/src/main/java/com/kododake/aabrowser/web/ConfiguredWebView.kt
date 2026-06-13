@@ -40,7 +40,8 @@ data class BrowserCallbacks(
     ) -> Unit = { _, _, _, cancel -> cancel() },
     val onEnterFullscreen: (View, WebChromeClient.CustomViewCallback) -> Unit = { _, _ -> },
     val onExitFullscreen: () -> Unit = {},
-    val onPermissionRequest: (PermissionRequest) -> Unit = { it.deny() }
+    val onPermissionRequest: (PermissionRequest) -> Unit = { it.deny() },
+    val onGeolocationPermissionRequest: (String?, android.webkit.GeolocationPermissions.Callback?) -> Unit = { _, callback -> callback?.invoke(null, false, false) }
 )
 
 fun configureWebView(
@@ -98,12 +99,16 @@ fun configureWebView(
         webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val uri = request.url
-                if (handleCleartextIfNeeded(view, uri, callbacks, onPageStart = false)) return true
+                if (handleCleartextIfNeeded(view, uri, callbacks, onPageStart = false)) {
+                    return true
+                }
                 return handleUri(view, uri)
             }
 
             private fun handleUri(view: WebView, uri: Uri?): Boolean {
-                uri ?: return false
+                if (uri == null) {
+                    return false
+                }
                 val scheme = uri.scheme?.lowercase()
                 if (scheme == null || scheme in setOf("http", "https", "about", "file", "data", "javascript")) {
                     return false
@@ -113,7 +118,10 @@ fun configureWebView(
 
             override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
-                val stringUrl = url ?: return
+                val stringUrl = url
+                if (stringUrl == null) {
+                    return
+                }
                 val uri = Uri.parse(stringUrl)
                 val scheme = uri.scheme?.lowercase()
 
@@ -186,18 +194,21 @@ fun configureWebView(
             }
 
             override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) {
-                val primary = try { error.primaryError } catch (_: Exception) { -1 }
-                val url = error.url ?: ""
-                val message = "SSL error: $primary"
-                val assetUrl = "file:///android_asset/error.html?failedUrl=${Uri.encode(url)}&sslError=$primary&message=${Uri.encode(message)}"
-                try {
-                    view.loadUrl(assetUrl)
+                val activity = view.context as? android.app.Activity
+                if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
+                    SslErrorHandlerHelper.handleSslError(activity, handler, error)
+                } else {
                     handler.cancel()
-                    return
-                } catch (_: Exception) {}
+                }
+            }
 
-                handler.cancel()
-                callbacks.onError(primary, message)
+            override fun onReceivedClientCertRequest(view: WebView, request: android.webkit.ClientCertRequest) {
+                val activity = view.context as? android.app.Activity
+                if (activity != null) {
+                    ClientCertHandler.handleClientCertRequest(activity, request)
+                } else {
+                    request.cancel()
+                }
             }
         }
 
@@ -230,7 +241,9 @@ fun configureWebView(
             }
 
             override fun onPermissionRequest(request: PermissionRequest?) {
-                if (request == null) return
+                if (request == null) {
+                    return
+                }
 
                 val allowed = setOf(
                     PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID,
@@ -251,6 +264,13 @@ fun configureWebView(
                 }
             }
 
+            override fun onGeolocationPermissionsShowPrompt(
+                origin: String?,
+                callback: android.webkit.GeolocationPermissions.Callback?
+            ) {
+                callbacks.onGeolocationPermissionRequest(origin, callback)
+            }
+
             override fun onCreateWindow(
                 view: WebView?,
                 isDialog: Boolean,
@@ -262,16 +282,26 @@ fun configureWebView(
         }
 
         setDownloadListener(DownloadListener { url, _, _, _, _ ->
-            val uri = url?.takeIf { it.isNotBlank() }?.toUri() ?: return@DownloadListener
+            val uri = url?.takeIf { it.isNotBlank() }?.toUri()
+            if (uri == null) {
+                return@DownloadListener
+            }
             callbacks.onShowDownloadPrompt(uri)
         })
     }
 }
 
 private fun handleCleartextIfNeeded(view: WebView, uri: Uri?, callbacks: BrowserCallbacks, onPageStart: Boolean = false): Boolean {
-    uri ?: return false
-    val scheme = uri.scheme?.lowercase() ?: return false
-    if (scheme != "http") return false
+    if (uri == null) {
+        return false
+    }
+    val scheme = uri.scheme?.lowercase()
+    if (scheme == null) {
+        return false
+    }
+    if (scheme != "http") {
+        return false
+    }
 
     val allowedOnce = view.getTag(R.id.webview_allow_once_uri_tag) as? String
     if (allowedOnce == uri.toString()) {
@@ -280,7 +310,9 @@ private fun handleCleartextIfNeeded(view: WebView, uri: Uri?, callbacks: Browser
     }
 
     val host = uri.host?.lowercase()
-    if (com.kododake.aabrowser.data.BrowserPreferences.isHostAllowedCleartext(view.context, host)) return false
+    if (com.kododake.aabrowser.data.BrowserPreferences.isHostAllowedCleartext(view.context, host)) {
+        return false
+    }
     if (onPageStart) view.stopLoading()
     val allowOnce = {
         view.setTag(R.id.webview_allow_once_uri_tag, uri.toString())
@@ -321,7 +353,9 @@ fun WebView.updatePageDarkening(enabled: Boolean) {
 
 fun WebView.releaseCompletely() {
     stopLoading()
-    webChromeClient = WebChromeClient()
+    (parent as? android.view.ViewGroup)?.removeView(this)
+    removeAllViews()
+    webChromeClient = null
     webViewClient = WebViewClient()
     destroy()
 }
@@ -331,7 +365,16 @@ private fun WebView.applyBrowserIdentity(profile: UserAgentProfile, desktop: Boo
     settings.userAgentString = buildUserAgent(profile, desktop)
     settings.useWideViewPort = desktop
     settings.loadWithOverviewMode = desktop
-    setInitialScale(if (desktop) DESKTOP_INITIAL_SCALE_PERCENT else mobileInitialScalePercent())
+    
+    val scalePercent = com.kododake.aabrowser.data.BrowserPreferences.getGlobalScalePercent(context)
+    if (desktop) {
+        setInitialScale(0)
+        settings.textZoom = scalePercent
+    } else {
+        setInitialScale(mobileInitialScalePercent())
+        settings.textZoom = 100
+    }
+    
     applyUserAgentMetadata(profile, desktop)
 }
 
@@ -340,7 +383,9 @@ private fun WebView.mobileInitialScalePercent(): Int {
 }
 
 private fun WebView.applyUserAgentMetadata(profile: UserAgentProfile, desktop: Boolean) {
-    if (!WebViewFeature.isFeatureSupported(WebViewFeature.USER_AGENT_METADATA)) return
+    if (!WebViewFeature.isFeatureSupported(WebViewFeature.USER_AGENT_METADATA)) {
+        return
+    }
 
     val metadata = when (profile) {
         UserAgentProfile.ANDROID_CHROME -> buildChromeUserAgentMetadata(desktop)
@@ -406,7 +451,7 @@ private fun chromeBrandVersions(): List<UserAgentMetadata.BrandVersion> {
 
 private const val DESKTOP_INITIAL_SCALE_PERCENT = 100
 private const val DESKTOP_BITNESS = 64
-private const val CHROME_VERSION = "146.0.0.0"
+private const val CHROME_VERSION = "149.0.0.0"
 private const val ANDROID_PLATFORM_VERSION = "10.0.0"
 private const val WINDOWS_PLATFORM_VERSION = "10.0.0"
 private const val MACOS_PLATFORM_VERSION = "14.0.0"

@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.util.LruCache
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -23,16 +24,38 @@ object SiteIconCache {
         .build()
 
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val inFlightHosts = Collections.synchronizedSet(mutableSetOf<String>())
+    private val inFlightCallbacks = Collections.synchronizedMap(mutableMapOf<String, MutableList<(Bitmap?) -> Unit>>())
+
+    private val memoryCache: LruCache<String, Bitmap> by lazy {
+        val maxMemory = (Runtime.getRuntime().maxMemory() / 1024).toInt()
+        val cacheSize = maxMemory / 16
+        object : LruCache<String, Bitmap>(cacheSize) {
+            override fun sizeOf(key: String, value: Bitmap): Int {
+                return value.byteCount / 1024
+            }
+        }
+    }
 
     fun getCachedIcon(context: Context, url: String?): Bitmap? {
+        val hostKey = hostKey(url) ?: return null
+        val memBitmap = memoryCache.get(hostKey)
+        if (memBitmap != null) return memBitmap
+
         val file = iconFile(context, url) ?: return null
         if (!file.exists()) return null
-        return runCatching { BitmapFactory.decodeFile(file.absolutePath) }.getOrNull()
+        val diskBitmap = runCatching { BitmapFactory.decodeFile(file.absolutePath) }.getOrNull()
+        if (diskBitmap != null) {
+            memoryCache.put(hostKey, diskBitmap)
+        }
+        return diskBitmap
     }
 
     fun cacheIcon(context: Context, pageUrl: String?, bitmap: Bitmap?) {
         if (bitmap == null) return
+        val hostKey = hostKey(pageUrl)
+        if (hostKey != null) {
+            memoryCache.put(hostKey, bitmap)
+        }
         val file = iconFile(context, pageUrl) ?: return
         runCatching {
             file.parentFile?.mkdirs()
@@ -57,7 +80,22 @@ object SiteIconCache {
             onComplete(null)
             return
         }
-        if (!inFlightHosts.add(hostKey)) return
+
+        var isFirstRequest = false
+        val listToNotify = synchronized(inFlightCallbacks) {
+            val list = inFlightCallbacks[hostKey]
+            if (list == null) {
+                isFirstRequest = true
+                val newList = mutableListOf(onComplete)
+                inFlightCallbacks[hostKey] = newList
+                newList
+            } else {
+                list.add(onComplete)
+                null
+            }
+        }
+
+        if (!isFirstRequest) return
 
         Thread {
             val bitmap = runCatching {
@@ -78,8 +116,17 @@ object SiteIconCache {
                 cacheIcon(context, pageUrl, bitmap)
             }
 
-            inFlightHosts.remove(hostKey)
-            mainHandler.post { onComplete(bitmap) }
+            val pending = synchronized(inFlightCallbacks) {
+                inFlightCallbacks.remove(hostKey)
+            }
+
+            if (pending != null) {
+                mainHandler.post {
+                    pending.forEach { callback ->
+                        callback(bitmap)
+                    }
+                }
+            }
         }.start()
     }
 
@@ -104,14 +151,6 @@ object SiteIconCache {
             "youtube.com" -> "https://www.youtube.com/favicon.ico"
             "www.google.com",
             "google.com" -> "https://www.google.com/favicon.ico"
-            "www.twitch.tv",
-            "twitch.tv" -> "https://www.twitch.tv/favicon.ico"
-            "www.kick.com",
-            "kick.com" -> "https://kick.com/favicon.ico"
-            "www.wikipedia.org",
-            "wikipedia.org" -> "https://www.wikipedia.org/static/favicon/wikipedia.ico"
-            "www.weather.com",
-            "weather.com" -> "https://weather.com/favicon.ico"
             else -> {
                 val scheme = uri.scheme?.takeIf { it.equals("http", true) || it.equals("https", true) } ?: "https"
                 "$scheme://$host/favicon.ico"

@@ -25,12 +25,7 @@ class UmamiTracker(context: Context) {
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
     private val appVersion: String by lazy {
-        try {
-            val pInfo = appContext.packageManager.getPackageInfo(appContext.packageName, 0)
-            pInfo.versionName ?: PackageInfoCompat.getLongVersionCode(pInfo).toString()
-        } catch (e: Exception) {
-            "unknown"
-        }
+        com.kododake.aabrowser.BuildConfig.VERSION_NAME
     }
 
     private val anonymousId: String by lazy {

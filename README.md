@@ -160,12 +160,12 @@ I care about the app's growth, but I care about your privacy even more. This app
 
 ## ☕ Support a Student Developer
 
-If AA Browser makes your "car life" better, please consider a donation! As a student developer on a tight budget, your support covers daily expenses.
+If AA Browser makes your "car life" better, please consider sponsoring this project! As a student developer on a tight budget, your support covers daily expenses.
 
 **GitHub Sponsor:**
 https://github.com/sponsors/kododake
 
-*If you donate, please let me know in the Discussions! I'd love to add you to our contributor list as a token of my gratitude.*
+*If you sponsor the project, please let me know in the Discussions! I'd love to add you to our sponsors list as a token of my gratitude.*
 
 ---
 **Stay safe, keep your eyes on the road, and happy browsing! 🚗💨**

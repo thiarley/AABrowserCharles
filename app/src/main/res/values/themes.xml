@@ -36,6 +36,12 @@
         <item name="android:navigationBarColor">@color/theme_background</item>
     </style>
 
+    <!-- Circular Image Shape -->
+    <style name="ShapeAppearance.App.Circle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
     <!-- Bottom Sheet Shape -->
     <style name="ShapeAppearanceOverlay.App.Card.BottomSheet" parent="">
         <item name="cornerFamily">rounded</item>

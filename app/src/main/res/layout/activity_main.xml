@@ -90,38 +90,30 @@
                         android:layout_marginTop="24dp"
                         app:cardCornerRadius="24dp"
                         app:cardElevation="0dp"
+                        android:clipChildren="false"
+                        android:clipToPadding="false"
+                        app:cardPreventCornerOverlap="false"
+                        app:cardUseCompatPadding="false"
                         app:cardBackgroundColor="?attr/colorSurfaceContainerLow">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
+                            android:clipChildren="false"
+                            android:clipToPadding="false"
                             android:padding="20dp">
 
-                            <TextView
-                                android:id="@+id/startPageCardTitle"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/start_page_card_title"
-                                android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
-                                android:textStyle="bold"
-                                android:textColor="?attr/colorOnSurface" />
-
-                            <TextView
-                                android:id="@+id/startPageCardSubtitle"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="@string/start_page_card_subtitle"
-                                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                                android:textColor="?attr/colorOnSurfaceVariant" />
-
-                            <LinearLayout
+                            <androidx.recyclerview.widget.RecyclerView
                                 android:id="@+id/startPageQuickLinksContainer"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="16dp"
-                                android:orientation="vertical" />
+                                android:layout_marginTop="0dp"
+                                android:padding="8dp"
+                                android:clipToPadding="false"
+                                android:clipChildren="false"
+                                android:nestedScrollingEnabled="false" />
+
 
                             <TextView
                                 android:id="@+id/startPageQuickLinksHint"
@@ -156,7 +148,9 @@
                             app:icon="@drawable/refresh_24px"
                             app:iconGravity="textStart"
                             app:iconPadding="8dp"
-                            app:cornerRadius="24dp" />
+                            app:cornerRadius="24dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="@android:color/white" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/buttonStartPagePhotoOnly"
@@ -171,16 +165,20 @@
                             app:icon="@drawable/crop_free_24px"
                             app:iconGravity="textStart"
                             app:iconPadding="8dp"
-                            app:cornerRadius="24dp" />
+                            app:cornerRadius="24dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="@android:color/white" />
                     </LinearLayout>
 
                     <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/startPageDonateCard"
+                        android:id="@+id/startPageSponsorsCard"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         app:cardCornerRadius="24dp"
                         app:cardElevation="0dp"
+                        app:cardPreventCornerOverlap="false"
+                        app:cardUseCompatPadding="false"
                         app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
                         app:strokeWidth="1dp"
                         app:strokeColor="?attr/colorOutlineVariant">
@@ -192,10 +190,10 @@
                             android:padding="16dp">
 
                             <TextView
-                                android:id="@+id/startPageDonateTitle"
+                                android:id="@+id/startPageSponsorsCardTitle"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="@string/settings_donate"
+                                android:text="@string/settings_sponsors"
                                 android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                                 android:textStyle="bold"
                                 android:textColor="?attr/colorOnSurface" />
@@ -204,36 +202,11 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="@string/settings_donate_description"
+                                android:text="@string/settings_sponsors_description"
                                 android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                                 android:textColor="?attr/colorOnSurfaceVariant"
                                 android:maxLines="2"
                                 android:ellipsize="end" />
-
-                            <com.google.android.material.button.MaterialButtonToggleGroup
-                                android:id="@+id/startPageDonateTabGroup"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="12dp"
-                                app:singleSelection="true"
-                                app:selectionRequired="true">
-
-                                <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/startPageDonateTabGithub"
-                                    style="@style/Widget.Material3.Button.OutlinedButton"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="@string/settings_donate_tab_github" />
-
-                                <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/startPageDonateTabBitcoin"
-                                    style="@style/Widget.Material3.Button.OutlinedButton"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="@string/settings_donate_tab_bitcoin" />
-                            </com.google.android.material.button.MaterialButtonToggleGroup>
 
                             <LinearLayout
                                 android:layout_width="match_parent"
@@ -243,13 +216,13 @@
                                 android:gravity="center_vertical">
 
                                 <ImageView
-                                    android:id="@+id/startPageDonateQrImage"
+                                    android:id="@+id/startPageSponsorsQrImage"
                                     android:layout_width="100dp"
                                     android:layout_height="100dp"
                                     android:background="#FFFFFF"
                                     android:padding="1dp"
                                     android:scaleType="fitCenter"
-                                    android:contentDescription="@string/settings_donate" />
+                                    android:contentDescription="@string/settings_sponsors" />
 
                                 <LinearLayout
                                     android:layout_width="0dp"
@@ -259,21 +232,99 @@
                                     android:orientation="vertical">
 
                                     <TextView
-                                        android:id="@+id/startPageDonateAddress"
+                                        android:id="@+id/startPageSponsorsAddress"
                                         android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
                                         android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                                         android:textColor="?attr/colorOnSurface" />
 
                                     <com.google.android.material.button.MaterialButton
-                                        android:id="@+id/startPageDonateActionButton"
+                                        android:id="@+id/startPageSponsorsActionButton"
                                         style="?attr/materialButtonTonalStyle"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:layout_marginTop="10dp" />
+                                        android:layout_marginTop="10dp"
+                                        app:strokeWidth="1dp"
+                                        app:strokeColor="@android:color/white" />
                                 </LinearLayout>
                             </LinearLayout>
                         </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/startPageSponsorsListCard"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:visibility="gone"
+                        app:cardCornerRadius="24dp"
+                        app:cardElevation="0dp"
+                        app:cardPreventCornerOverlap="false"
+                        app:cardUseCompatPadding="false"
+                        app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="?attr/colorOutlineVariant">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:id="@+id/startPageSponsorsListTitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/settings_sponsors_list"
+                                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                                android:textStyle="bold"
+                                android:textColor="?attr/colorOnSurface" />
+
+                            <TextView
+                                android:id="@+id/startPageSponsorsListDescription"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="@string/settings_sponsors_list_description"
+                                android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                                android:textColor="?attr/colorOnSurfaceVariant" />
+
+                            <LinearLayout
+                                android:id="@+id/startPageSponsorsListContainer"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="16dp"
+                                android:orientation="vertical" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/startPageSponsorsHiddenPienCard"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:visibility="gone"
+                        app:cardCornerRadius="24dp"
+                        app:cardElevation="0dp"
+                        app:cardPreventCornerOverlap="false"
+                        app:cardUseCompatPadding="false"
+                        app:cardBackgroundColor="?attr/colorSurfaceContainerLow"
+                        app:strokeWidth="1dp"
+                        app:strokeColor="?attr/colorOutlineVariant">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="120dp"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:id="@+id/startPageSponsorsHiddenPienText"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:text="🥺"
+                                android:textSize="56sp" />
+                        </FrameLayout>
                     </com.google.android.material.card.MaterialCardView>
 
                     <View
@@ -359,7 +410,8 @@
                 android:visibility="gone"
                 app:icon="@drawable/ic_close"
                 app:iconSize="20dp"
-                app:iconTint="?attr/colorOnSurfaceVariant" />
+                app:iconTint="?attr/colorOnSurfaceVariant"
+                app:iconGravity="textStart" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/persistentButtonGo"
@@ -368,7 +420,8 @@
                 android:layout_height="48dp"
                 android:contentDescription="@string/menu_go"
                 app:icon="@drawable/search_24px"
-                app:iconSize="20dp" />
+                app:iconSize="20dp"
+                app:iconGravity="textStart" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/persistentButtonMenu"
@@ -378,7 +431,8 @@
                 android:contentDescription="@string/menu_open_description"
                 app:icon="@android:drawable/ic_menu_more"
                 app:iconSize="20dp"
-                app:iconTint="?attr/colorOnSurfaceVariant" />
+                app:iconTint="?attr/colorOnSurfaceVariant"
+                app:iconGravity="textStart" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
@@ -565,7 +619,8 @@
                                         android:visibility="gone"
                                         app:icon="@drawable/ic_close"
                                         app:iconSize="20dp"
-                                        app:iconTint="?attr/colorOnSurfaceVariant" />
+                                        app:iconTint="?attr/colorOnSurfaceVariant"
+                                        app:iconGravity="textStart" />
 
                                     <com.google.android.material.button.MaterialButton
                                         android:id="@+id/buttonGo"
@@ -574,7 +629,8 @@
                                         android:layout_height="48dp"
                                         android:contentDescription="@string/menu_go"
                                         app:icon="@drawable/search_24px"
-                                        app:iconSize="20dp" />
+                                        app:iconSize="20dp"
+                                        app:iconGravity="textStart" />
 
                                 </LinearLayout>
                             </com.google.android.material.card.MaterialCardView>
@@ -876,7 +932,8 @@
                                     android:insetBottom="0dp"
                                     android:insetLeft="0dp"
                                     android:insetRight="0dp"
-                                    android:padding="0dp" />
+                                    android:padding="0dp"
+                                    app:iconGravity="textStart" />
                             </LinearLayout>
 
                         </LinearLayout>
@@ -1013,12 +1070,12 @@
                                 app:iconSize="24dp"
                                 app:iconPadding="12dp" />
 
-                            <LinearLayout
+                            <androidx.recyclerview.widget.RecyclerView
                                 android:id="@+id/bookmarkManagerList"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:layout_marginTop="@dimen/menu_section_spacing" />
+                                android:layout_marginTop="@dimen/menu_section_spacing"
+                                android:nestedScrollingEnabled="false" />
 
                         </LinearLayout>
                     </androidx.core.widget.NestedScrollView>
@@ -1120,12 +1177,12 @@
                                 app:iconSize="24dp"
                                 app:iconPadding="12dp" />
 
-                            <LinearLayout
+                            <androidx.recyclerview.widget.RecyclerView
                                 android:id="@+id/tabManagerList"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:layout_marginTop="@dimen/menu_section_spacing" />
+                                android:layout_marginTop="@dimen/menu_section_spacing"
+                                android:nestedScrollingEnabled="false" />
 
                         </LinearLayout>
                     </androidx.core.widget.NestedScrollView>
