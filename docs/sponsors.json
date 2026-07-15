@@ -33,5 +33,12 @@
     "amount": 2.00,
     "message": "​Huge thanks for the $2 donation! My vending machine tea break is powered by your support🍵",
     "date": "2026-06-26"
+  },
+  "5": {
+    "name": "ndamiyep-lab",
+    "github": "ndamiyep-lab",
+    "amount": 10.00,
+    "message": "Thank you! Your support is a huge help for this student dev and my Matcha supply! 🍵✨",
+    "date": "2026-07-15"
   }
 }
