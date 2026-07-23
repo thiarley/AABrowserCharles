@@ -1,67 +1,112 @@
 # <img src="app/src/main/res/drawable/ic_launcher_foreground.png" width="48" height="48" valign="bottom" /> AABrowserCharlesJose v2.3
 
+[![Language pt-BR](https://img.shields.io/badge/Language-Portugu%C3%AAs%20(pt--BR)-green?style=for-the-badge)](README.pt-BR.md)
 [![Android](https://img.shields.io/badge/Android-15%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://www.android.com/)
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0)
 
 > [!NOTE]
 > **Fork & Attribution Notice**
 > 
-> **AABrowserCharlesJose** é um fork aprimorado do projeto open-source original **[AABrowser](https://github.com/kododake/AABrowser)** desenvolvido por **Kododake**. Todos os créditos do projeto base pertencem ao autor original. Este fork adiciona recursos de segurança, telemetria veicular universal (EV e Combustão), modo split-screen estilo YouTube Music, suporte avançado a streaming e personalizações de interface gráfica.
+> **AABrowserCharlesJose** is an enhanced fork of the open-source **[AABrowser](https://github.com/kododake/AABrowser)** project created by **Kododake**. All credits for the original base project belong to the original author. This fork introduces universal vehicle telemetry (EV & Combustion HUD), 4-digit App Lock PIN privacy, streaming compatibility (Netflix, Disney+, Prime Video), YouTube Music-style split-screen layout, motion video controls, and full privacy (zero trackers).
 
 ---
 
-## ✨ Novos Recursos da Versão 2.3 (Release)
+## 📖 Available Languages / Idiomas disponíveis
 
-### 🚘 1. Painel Universal de Telemetria Automotiva (*Vehicle Telemetry Dashboard HUD*)
-* **Suporte Híbrido (EV & Combustão):** Exibe métricas de veículos **Elétricos (EV)** e **A Combustão (Gasolina / Flex / Diesel)** com detecção automática (*Auto-Detect*).
-* **Indicadores em Tempo Real:** 
-  * 🔋/⛽ Nível de Bateria / Combustível ($\%$) e Autonomia em quilômetros ($\text{km}$).
-  * ⚡/⛽ Consumo de Energia Instantâneo ($\text{kW}$) ou Consumo Médio ($\text{km/L}$).
-  * 🚗 Velocidade em tempo real ($\text{km/h}$) e Temperatura externa ($\text{°C}$).
-* **Barra de Progresso Dinâmica (`evGaugeBar`):** Barra em arco com variação automática de cor (Verde $\rightarrow$ Amarelo $\rightarrow$ Vermelho crítico).
-* **Posicionamento Flutuante:** Escolha da posição na tela (*Topo Direita, Topo Esquerda, Roda-pé Direita, Roda-pé Esquerda*).
-
-### 🔐 2. Bloqueio por PIN de Segurança (*App Lock*)
-* **Proteção de Privacidade:** Criptografia SHA-256 com salt para proteger suas contas pessoais (Google, bancos, streaming) quando o veículo estiver em lava-jato, valet ou manutenção.
-* **Overlay em Tela Cheia:** Oculta todo o conteúdo do navegador e abas até a digitação do PIN correto de 4 dígitos.
-
-### 🎬 3. Compatibilidade Avançada com Streaming (Netflix, Disney+, Prime Video)
-* **Auto-Desktop Mode:** Alternância automática para User Agent Desktop ao acessar Netflix, Disney+ e Amazon Prime Video, liberando o Web Player oficial.
-* **Propagação & Persistência SSL:** Autorização automática e salvamento permanente de certificados SSL para domínios e CDNs parceiras (`*.nflxext.com`, `*.disney-plus.net`, etc.), eliminando popups repetidos.
-
-### 🚗 4. Controle de Vídeo em Movimento (4 Modos)
-* **Continuar reproduzindo normalmente**
-* **Parar vídeo (sem fechar o app)**
-* **Mini-player flutuante (PiP no canto da tela)**
-* **Minimizar app e manter apenas o áudio em segundo plano**
-
-### 🗺️ 5. Layout Tela Dividida (*Split Screen Mapa + Browser*)
-* Visualização lado a lado do **Mapa (Google Maps)** e do **Navegador / YouTube** com botão flutuante para inversão de lados (*Mapa na Esquerda* ou *Navegador na Esquerda*).
-
-### 🛡️ 6. 100% Privado (Sem Trackers ou Telemetria)
-* Módulo de rastreamento `UmamiTracker` completamente removido do código-fonte. Zero estatísticas enviadas para a internet.
-
-### 📱 7. Otimizado para Android Auto Coolwalk (10.0+) & Android 16 Ready
-* Suporte nativo a janela redimensionável (`resizeableActivity`), Picture-in-Picture (`supportsPictureInPicture`), tratamento de recortes de tela (`WindowInsetsCompat`) e navegação por controles giratórios do console (*Rotary Controllers / iDrive*).
+* 🇺🇸 **English:** You are reading the main documentation.
+* 🇧🇷 **Português (pt-BR):** [Clique aqui para ler a versão em Português (pt-BR)](README.pt-BR.md).
 
 ---
 
-## 🛠️ Como Compilar o Projeto
+## 🌟 Comprehensive Features (Complete List)
 
-### Pré-requisitos
-* Android SDK (Plataforma 37 / API 35+)
-* Java JDK 21
+### 🚗 Vehicle & Driving Features
+* ⚡ **Universal Vehicle Telemetry Dashboard (EV & Combustion HUD):**
+  * **EV Mode:** Displays Battery Charge ($\%$), Estimated Range ($\text{km}$), Instantaneous Power ($\text{kW}$ acceleration/regen), Speed ($\text{km/h}$), and Outside Temp ($\text{°C}$).
+  * **Combustion Mode:** Displays Fuel Level ($\%$), Range ($\text{km}$), Average Consumption ($\text{km/L}$), Speed ($\text{km/h}$), and Outside Temp ($\text{°C}$).
+  * **Auto-Detect Engine Type:** Automatically identifies vehicle propulsion type.
+  * **Dynamic HUD Gauge Bar:** Curved progress indicator with color transitions (🟢 Green $>50\%$, 🟡 Yellow $20-50\%$, 🔴 Red $<20\%$).
+  * **Customizable Floating Position:** Move the HUD to Top Right, Top Left, Bottom Right, or Bottom Left.
+* 🎬 **Streaming Compatibility & Persistent SSL (Netflix, Disney+, Prime Video):**
+  * **Auto-Desktop Mode:** Enforces Desktop User Agent on streaming sites to load official Web Players without mobile block screens.
+  * **Subdomain SSL Propagation & Persistence:** Automatic wildcard SSL approval for streaming CDNs (`*.nflxext.com`, `*.disney-plus.net`, etc.) saved permanently in preferences.
+* 🚗 **Video Playback in Motion (4 Modes):**
+  * 1) Continue video normally
+  * 2) Pause video (keep app open)
+  * 3) Floating Mini-Player (Picture-in-Picture in screen corner)
+  * 4) Minimize app and keep audio playing in background (`ForegroundService`)
+* 🗺️ **Dual-Pane Split Screen (Map + Browser):**
+  * YouTube Music-style side-by-side view with Google Maps and Browser/YouTube.
+  * One-tap floating button to swap sides (*Map Left | Browser Right* or *Browser Left | Map Right*).
 
-### Comando de Build
+### 🔐 Security & Privacy Features
+* 🔐 **App Lock PIN Privacy Protection:**
+  * 4-digit PIN lock screen with SHA-256 + Salt encryption.
+  * Fullscreen lock overlay hides all browser tabs and web content when leaving your car for valet, car wash, or maintenance.
+* 🛡️ **100% Private (No Trackers / Telemetry):**
+  * `UmamiTracker` module completely deleted from codebase. Zero usage statistics or telemetry sent to the internet.
+
+### 🌐 Browser Core Features
+* 🗂️ **Real Tab Manager & Session Restore:** Open multiple tabs, switch between tabs easily, close tabs, and optional tab session restore on app launch.
+* 🎨 **Light + AMOLED Dark Mode + Beta Dark Pages:** Bright light theme, true-black AMOLED dark theme, and optional forced dark page rendering.
+* 🏠 **Custom Home Page & Speed Dial Cards:** Custom start page with Material 3 elevated shortcut cards for YouTube, Netflix, Disney+, Prime Video, Spotify, and Google Maps.
+* 🧭 **Persistent Address Bar & Configurable FAB:** Optional compact top URL bar and customizable floating action button (position and click action).
+* 🔎 **Global Display Scale:** Adjust UI and web content scaling with presets or custom percentages for widescreen automotive displays (16:9, 21:9, 32:9).
+
+### 📱 Android Auto & Hardware Optimizations
+* 🚗 **Android Auto Coolwalk 10.0+ Native Support:** Window resizing (`resizeableActivity`), Picture-in-Picture (`supportsPictureInPicture`), and dynamic multi-window re-layout.
+* 📱 **Android 15 & Android 16 (API 35/37) Ready:** Full compliance with modern Android system APIs.
+* 📐 **Edge-to-Edge & System Insets:** `WindowInsetsCompat` handling prevents UI elements from being hidden under rounded display corners or notches.
+* 🕹️ **Rotary Controller / iDrive Support:** Focus highlights on interactive controls for cars with console D-Pad / rotary knobs (BMW, Audi, Mercedes, Mazda).
+
+---
+
+## 📥 Installation Instructions for Android 15 & Android 16
+
+### Step 1: Install the APK on your Phone
+1. Download [AABrowserCharlesJose-2.3.apk](app/build/renamedApks/release/AABrowserCharlesJose-2.3.apk) from the repository or GitHub Releases.
+2. On your Android 15 or 16 phone, open your File Manager and tap the downloaded `.apk` file.
+3. If prompted, allow **"Install unknown apps"** for your file manager.
+4. Tap **Install** to complete the installation.
+
+### Step 2: Enable Android Auto Unknown Sources (First Time Only)
+To allow the app to appear in your car's Android Auto launcher:
+1. On your phone, go to **Settings > Apps > Android Auto** (or open Android Auto settings).
+2. Scroll down to the bottom and tap **Version** 10 times consecutively until a popup says *"Developer settings enabled"*.
+3. Tap the **Three Dots Menu** (top right) and select **Developer settings**.
+4. Check **Unknown sources**.
+5. Tap **Application Mode** and select **Developer**.
+6. Go back to Android Auto settings, select **Customize Launcher**, and ensure **AABrowserCharlesJose** is checked.
+
+### Step 3: Grant Required Permissions on First Launch
+When opening the app for the first time, grant the requested runtime permissions:
+* 📍 **Location Permission:** Required for GPS real-time speed & vehicle telemetry.
+* 🎙️ **Microphone Permission:** Required for voice search and speech-to-text input.
+* 🔔 **Notification Permission (Android 13+):** Required for background audio playback service controls.
+
+---
+
+## 🛠️ Building from Source
+
+### Requirements
+* Android SDK (API 35/37)
+* JDK 21
+
 ```bash
+# Build Release APK
+./gradlew assembleRelease
+
+# Build Debug APK
 ./gradlew assembleDebug
 ```
-O APK final será gerado em: `app/build/renamedApks/debug/AABrowserCharlesJose-2.3_debug.apk`.
+Output APK locations:
+* **Release APK:** `app/build/renamedApks/release/AABrowserCharlesJose-2.3.apk`
+* **Debug APK:** `app/build/renamedApks/debug/AABrowserCharlesJose-2.3_debug.apk`
 
 ---
 
-## 📜 Licença e Créditos
+## 📜 License & Credits
 
-Este projeto está sob a licença **[GPLv3](LICENSE)**.
-* **Autor Original:** [Kododake (AABrowser)](https://github.com/kododake/AABrowser)
-* **Fork & Melhorias v2.3:** Charles & Thiarley
+Distributed under the **[GPLv3 License](LICENSE)**.
+* **Original Project:** [Kododake (AABrowser)](https://github.com/kododake/AABrowser)
+* **Fork & v2.3 Enhancements:** Charles & Thiarley
