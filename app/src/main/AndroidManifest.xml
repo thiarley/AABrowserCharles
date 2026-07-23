@@ -80,7 +80,6 @@
                 android:gravity="fill"
                 android:defaultWidth="800dp"
                 android:defaultHeight="480dp" />
-            <meta-data android:name="distractionOptimized" android:value="true" />
             <meta-data android:name="android.max_aspect" android:value="5.0" />
         </activity>
 
@@ -117,6 +116,15 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
+
+        <service
+            android:name=".media.AAMediaBrowserService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+                <action android:name="androidx.media.MediaBrowserService" />
+            </intent-filter>
+        </service>
 
     </application>
 

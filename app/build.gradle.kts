@@ -116,6 +116,7 @@ dependencies {
     implementation(libs.androidx.webkit)
     implementation(libs.google.material)
     implementation(libs.androidx.car.app)
+    implementation("androidx.media:media:1.7.0")
     implementation(libs.zxing.core)
 
     implementation(libs.okhttp)

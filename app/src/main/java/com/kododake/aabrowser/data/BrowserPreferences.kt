@@ -754,7 +754,7 @@ object BrowserPreferences {
 
     fun getInMotionVideoMode(context: Context): InMotionVideoMode {
         val key = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getString(KEY_IN_MOTION_VIDEO_MODE, InMotionVideoMode.AUDIO_ONLY.storageKey)
+            .getString(KEY_IN_MOTION_VIDEO_MODE, InMotionVideoMode.CONTINUE.storageKey)
         return InMotionVideoMode.fromKey(key)
     }
 

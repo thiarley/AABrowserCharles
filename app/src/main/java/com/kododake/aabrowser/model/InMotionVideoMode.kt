@@ -8,7 +8,7 @@ enum class InMotionVideoMode(val storageKey: String) {
 
     companion object {
         fun fromKey(key: String?): InMotionVideoMode {
-            return entries.firstOrNull { it.storageKey == key } ?: AUDIO_ONLY
+            return entries.firstOrNull { it.storageKey == key } ?: CONTINUE
         }
     }
 }
