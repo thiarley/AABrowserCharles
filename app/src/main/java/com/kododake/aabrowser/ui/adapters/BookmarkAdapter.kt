@@ -81,6 +81,17 @@ class BookmarkAdapter(
             binding.badgeText.visibility = if (badgeText.isNotEmpty()) View.VISIBLE else View.GONE
             binding.badgeText.setTextColor(resolveThemeColor(com.google.android.material.R.attr.colorOnSurfaceVariant))
 
+            val isDesktopForSite = BrowserPreferences.isDesktopModeForUrl(context, bookmark)
+            val desktopBgAttr = if (isDesktopForSite) com.google.android.material.R.attr.colorPrimaryContainer else com.google.android.material.R.attr.colorSurfaceContainerHighest
+            val desktopIconAttr = if (isDesktopForSite) com.google.android.material.R.attr.colorOnPrimaryContainer else com.google.android.material.R.attr.colorOnSurfaceVariant
+            
+            binding.buttonDesktopMode.backgroundTintList = ColorStateList.valueOf(resolveThemeColor(desktopBgAttr))
+            binding.buttonDesktopMode.iconTint = ColorStateList.valueOf(resolveThemeColor(desktopIconAttr))
+            binding.buttonDesktopMode.setOnClickListener {
+                BrowserPreferences.toggleDesktopModeForUrl(context, bookmark)
+                notifyItemChanged(bindingAdapterPosition)
+            }
+
             val isPinned = startPageSlot >= 0
             val bgAttr = if (isPinned) com.google.android.material.R.attr.colorPrimaryContainer else com.google.android.material.R.attr.colorSecondaryContainer
             val iconAttr = if (isPinned) com.google.android.material.R.attr.colorOnPrimaryContainer else com.google.android.material.R.attr.colorOnSecondaryContainer

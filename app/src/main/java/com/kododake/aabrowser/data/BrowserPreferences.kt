@@ -132,6 +132,7 @@ object BrowserPreferences {
     }
 
     private const val KEY_DESKTOP_HOSTS_SET = "desktop_hosts_set"
+    private const val KEY_DESKTOP_DISABLED_HOSTS_SET = "desktop_disabled_hosts_set"
 
     fun shouldUseDesktopMode(context: Context): Boolean {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -141,30 +142,44 @@ object BrowserPreferences {
     fun isDesktopModeForUrl(context: Context, url: String?): Boolean {
         if (url.isNullOrBlank()) return false
         val host = runCatching { Uri.parse(url).host?.lowercase() }.getOrNull() ?: return false
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-        if (isStreamingHost(host) && isAutoDesktopStreamingEnabled(context)) {
+        val disabledSet = prefs.getStringSet(KEY_DESKTOP_DISABLED_HOSTS_SET, emptySet()) ?: emptySet()
+        if (disabledSet.contains(host)) {
+            return false
+        }
+
+        val enabledSet = prefs.getStringSet(KEY_DESKTOP_HOSTS_SET, emptySet()) ?: emptySet()
+        if (enabledSet.contains(host)) {
             return true
         }
 
-        val set = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getStringSet(KEY_DESKTOP_HOSTS_SET, emptySet()) ?: emptySet()
-        return set.contains(host)
+        return isStreamingHost(host) && isAutoDesktopStreamingEnabled(context)
     }
 
     fun toggleDesktopModeForUrl(context: Context, url: String?): Boolean {
         if (url.isNullOrBlank()) return false
         val host = runCatching { Uri.parse(url).host?.lowercase() }.getOrNull() ?: return false
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val set = prefs.getStringSet(KEY_DESKTOP_HOSTS_SET, emptySet())?.toMutableSet() ?: mutableSetOf()
 
-        val newState = if (set.contains(host)) {
-            set.remove(host)
-            false
+        val enabledSet = prefs.getStringSet(KEY_DESKTOP_HOSTS_SET, emptySet())?.toMutableSet() ?: mutableSetOf()
+        val disabledSet = prefs.getStringSet(KEY_DESKTOP_DISABLED_HOSTS_SET, emptySet())?.toMutableSet() ?: mutableSetOf()
+
+        val currentState = isDesktopModeForUrl(context, url)
+        val newState = !currentState
+
+        if (newState) {
+            enabledSet.add(host)
+            disabledSet.remove(host)
         } else {
-            set.add(host)
-            true
+            disabledSet.add(host)
+            enabledSet.remove(host)
         }
-        prefs.edit().putStringSet(KEY_DESKTOP_HOSTS_SET, set).apply()
+
+        prefs.edit()
+            .putStringSet(KEY_DESKTOP_HOSTS_SET, enabledSet)
+            .putStringSet(KEY_DESKTOP_DISABLED_HOSTS_SET, disabledSet)
+            .apply()
         return newState
     }
 
