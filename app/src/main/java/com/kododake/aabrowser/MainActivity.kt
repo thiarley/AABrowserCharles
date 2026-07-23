@@ -829,6 +829,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applySplitScreenLayout() {
+        if (!::binding.isInitialized) return
         val mode = BrowserPreferences.getSplitScreenMode(this)
         val mapContainer = binding.mapContainer
         val webViewContainer = binding.webViewContainer
@@ -839,19 +840,28 @@ class MainActivity : AppCompatActivity() {
             SplitScreenMode.DISABLED -> {
                 mapContainer.visibility = View.GONE
                 btnSwap.visibility = View.GONE
-                val lp = webViewContainer.layoutParams as LinearLayout.LayoutParams
-                lp.width = LinearLayout.LayoutParams.MATCH_PARENT
-                lp.weight = 0f
-                webViewContainer.layoutParams = lp
+                if (webViewContainer.parent != splitContainer) {
+                    (webViewContainer.parent as? android.view.ViewGroup)?.removeView(webViewContainer)
+                    splitContainer.addView(webViewContainer)
+                }
+                val lp = webViewContainer.layoutParams
+                if (lp is LinearLayout.LayoutParams) {
+                    lp.width = 0
+                    lp.weight = 1f
+                    webViewContainer.layoutParams = lp
+                }
             }
             SplitScreenMode.MAP_LEFT_BROWSER_RIGHT -> {
                 mapContainer.visibility = View.VISIBLE
                 btnSwap.visibility = View.VISIBLE
                 setupMapWebViewIfNeeded()
 
+                (mapContainer.parent as? android.view.ViewGroup)?.removeView(mapContainer)
+                (webViewContainer.parent as? android.view.ViewGroup)?.removeView(webViewContainer)
                 splitContainer.removeAllViews()
-                val mapLp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 2f)
-                val webLp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
+
+                val mapLp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
+                val webLp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 2f)
                 splitContainer.addView(mapContainer, mapLp)
                 splitContainer.addView(webViewContainer, webLp)
             }
@@ -860,7 +870,10 @@ class MainActivity : AppCompatActivity() {
                 btnSwap.visibility = View.VISIBLE
                 setupMapWebViewIfNeeded()
 
+                (mapContainer.parent as? android.view.ViewGroup)?.removeView(mapContainer)
+                (webViewContainer.parent as? android.view.ViewGroup)?.removeView(webViewContainer)
                 splitContainer.removeAllViews()
+
                 val webLp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 2f)
                 val mapLp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
                 splitContainer.addView(webViewContainer, webLp)
@@ -977,15 +990,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applyEvDashboardPosition() {
+        if (!::binding.isInitialized) return
         val position = BrowserPreferences.getEvDashboardPosition(this)
-        val params = binding.evDashboardWidget.layoutParams as android.widget.FrameLayout.LayoutParams
-        when (position) {
-            "top_left" -> params.gravity = android.view.Gravity.TOP or android.view.Gravity.START
-            "bottom_right" -> params.gravity = android.view.Gravity.BOTTOM or android.view.Gravity.END
-            "bottom_left" -> params.gravity = android.view.Gravity.BOTTOM or android.view.Gravity.START
-            else -> params.gravity = android.view.Gravity.TOP or android.view.Gravity.END
+        val gravity = when (position) {
+            "top_left" -> android.view.Gravity.TOP or android.view.Gravity.START
+            "bottom_right" -> android.view.Gravity.BOTTOM or android.view.Gravity.END
+            "bottom_left" -> android.view.Gravity.BOTTOM or android.view.Gravity.START
+            else -> android.view.Gravity.TOP or android.view.Gravity.END
         }
-        binding.evDashboardWidget.layoutParams = params
+        val lp = binding.evDashboardWidget.layoutParams
+        if (lp is androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) {
+            lp.gravity = gravity
+            binding.evDashboardWidget.layoutParams = lp
+        } else if (lp is android.widget.FrameLayout.LayoutParams) {
+            lp.gravity = gravity
+            binding.evDashboardWidget.layoutParams = lp
+        }
     }
 
     private fun updateEvDashboardUi(data: EvTelemetryData) {
