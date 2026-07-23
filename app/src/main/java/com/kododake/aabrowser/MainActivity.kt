@@ -208,7 +208,6 @@ class MainActivity : AppCompatActivity() {
         setupBackPressHandling()
         
         permissionManager.ensureNotificationPermissionIfNeeded(REQUEST_CODE_POST_NOTIFICATIONS)
-        showFreeDroidWarnOnUpgradeMaterial()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -533,24 +532,6 @@ class MainActivity : AppCompatActivity() {
                 tab.webView.updateUserAgentProfile(p, BrowserPreferences.shouldUseDesktopMode(this))
             }
         }
-    }
-
-    private fun showFreeDroidWarnOnUpgradeMaterial() {
-        val vCode = runCatching { packageManager.getPackageInfo(packageName, 0).longVersionCode.toInt() }.getOrDefault(1)
-        val pref = getSharedPreferences("${packageName}_preferences", Context.MODE_PRIVATE)
-        if (vCode <= pref.getInt(FREE_DROID_WARN_VERSION_KEY, 0)) return
-        val view = layoutInflater.inflate(R.layout.dialog_free_droid_warn, null)
-        view.findViewById<android.widget.TextView>(R.id.free_droid_warn_title).text = getString(android.R.string.dialog_alert_title)
-        view.findViewById<android.widget.TextView>(R.id.free_droid_warn_message).text = getString(FreeDroidWarnR.string.dialog_Warning)
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
-            .setView(view)
-            .setNegativeButton(FreeDroidWarnR.string.dialog_more_info) { _, _ -> navigationManager.loadUrlFromIntent(KEEP_ANDROID_OPEN_URL) }
-            .setNeutralButton(FreeDroidWarnR.string.solution) { _, _ -> navigationManager.loadUrlFromIntent(FREE_DROID_WARN_SOLUTIONS_URL) }
-            .setPositiveButton(android.R.string.ok) { _, _ -> pref.edit().putInt(FREE_DROID_WARN_VERSION_KEY, vCode).apply() }
-            .create()
-        dialog.setCanceledOnTouchOutside(false)
-        dialog.show()
-        dialog.getButton(DialogInterface.BUTTON_NEUTRAL)?.setTextColor(themeManager.resolveThemeColor(androidx.appcompat.R.attr.colorError))
     }
 
     private fun createBookmarkCallbacks() = object : BookmarkManager.BookmarkCallbacks {
