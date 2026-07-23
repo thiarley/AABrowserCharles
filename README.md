@@ -9,6 +9,11 @@
 > 
 > **AABrowserCharlesJose** is an enhanced fork of the open-source **[AABrowser](https://github.com/kododake/AABrowser)** project created by **Kododake**. All credits for the original base project belong to the original author. This fork introduces universal vehicle telemetry (EV & Combustion HUD), 4-digit App Lock PIN privacy, streaming compatibility (Netflix, Disney+, Prime Video), YouTube Music-style split-screen layout, motion video controls, and full privacy (zero trackers).
 
+> [!WARNING]
+> **Safety & Driver Disclaimer**
+> 
+> Drivers **MUST NOT** watch videos or look at interactive media while driving. Video playback options in motion (such as Picture-in-Picture or In-Motion Video modes) are **EXCLUSIVELY intended for passengers** to enjoy entertainment safely. The driver must maintain full attention on the road at all times. By default, video playback minimizes and switches to audio-only when the vehicle is in motion.
+
 ---
 
 ## 📖 Available Languages / Idiomas disponíveis
