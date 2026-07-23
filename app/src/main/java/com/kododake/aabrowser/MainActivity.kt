@@ -33,6 +33,7 @@ import com.kododake.aabrowser.AppConstants.REQUEST_CODE_RECORD_AUDIO
 import com.kododake.aabrowser.bookmarks.BookmarkManager
 import com.kododake.aabrowser.data.BrowserPreferences
 import com.kododake.aabrowser.data.SiteIconCache
+import com.kododake.aabrowser.web.applyBrowserIdentity
 import com.kododake.aabrowser.databinding.ActivityMainBinding
 import android.widget.LinearLayout
 import com.kododake.aabrowser.media.AudioBackgroundService
@@ -278,11 +279,16 @@ class MainActivity : AppCompatActivity() {
             shouldForceSessionRestore
         )
         currentUserAgentProfile = BrowserPreferences.getUserAgentProfile(this)
-        binding.desktopSwitch.isChecked = BrowserPreferences.shouldUseDesktopMode(this)
+        binding.desktopSwitch.isChecked = BrowserPreferences.isDesktopModeForUrl(this, currentUrl)
         binding.desktopSwitch.setOnCheckedChangeListener { _, isChecked ->
-            BrowserPreferences.setDesktopMode(this, isChecked)
-            tabManager.browserTabs.forEach { tab ->
-                tab.webView.updateDesktopMode(isChecked, currentUserAgentProfile)
+            val url = currentUrl
+            if (url.isNotBlank()) {
+                val currentSetState = BrowserPreferences.isDesktopModeForUrl(this, url)
+                if (currentSetState != isChecked) {
+                    BrowserPreferences.toggleDesktopModeForUrl(this, url)
+                    webView?.applyBrowserIdentity(currentUserAgentProfile, isChecked)
+                    webView?.reload()
+                }
             }
         }
         
@@ -752,6 +758,10 @@ class MainActivity : AppCompatActivity() {
         
         override fun showMenuButtonTemporarily() {
             this@MainActivity.showMenuButtonTemporarily()
+        }
+
+        override fun getCurrentUrl(): String {
+            return currentUrl
         }
     }
 

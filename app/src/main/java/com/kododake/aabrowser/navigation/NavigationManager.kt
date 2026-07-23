@@ -13,6 +13,7 @@ import com.kododake.aabrowser.permissions.PermissionManager
 import com.kododake.aabrowser.startpage.StartPageManager
 import com.kododake.aabrowser.tabs.TabManager
 import com.kododake.aabrowser.ui.BrowserUIManager
+import com.kododake.aabrowser.web.applyBrowserIdentity
 
 class NavigationManager(
     private val activity: AppCompatActivity,
@@ -78,6 +79,10 @@ class NavigationManager(
             targetTab.currentUrl = navigable
             targetTab.currentTitle = ""
             
+            val useDesktop = BrowserPreferences.isDesktopModeForUrl(activity, navigable)
+            val profile = BrowserPreferences.getUserAgentProfile(activity)
+            targetWebView.applyBrowserIdentity(profile, useDesktop)
+
             if (targetTab.id == tabManager.activeTabId) {
                 callbacks.setCurrentUrl(navigable)
                 callbacks.setCurrentPageTitle("")

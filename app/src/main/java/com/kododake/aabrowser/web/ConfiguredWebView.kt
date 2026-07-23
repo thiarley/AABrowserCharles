@@ -99,6 +99,16 @@ fun configureWebView(
         webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val uri = request.url
+                val targetUrl = uri?.toString()
+                if (targetUrl != null) {
+                    val isDesktopNeeded = com.kododake.aabrowser.data.BrowserPreferences.isDesktopModeForUrl(view.context, targetUrl)
+                    val currentDesktop = (view.getTag(R.id.webview_desktop_mode_tag) as? Boolean) ?: false
+                    if (isDesktopNeeded != currentDesktop) {
+                        val currentProfile = (view.getTag(R.id.webview_user_agent_profile_tag) as? String)
+                            ?.let { UserAgentProfile.fromKey(it) } ?: UserAgentProfile.ANDROID_CHROME
+                        view.applyBrowserIdentity(currentProfile, desktop = isDesktopNeeded)
+                    }
+                }
                 if (handleCleartextIfNeeded(view, uri, callbacks, onPageStart = false)) {
                     return true
                 }
@@ -118,15 +128,16 @@ fun configureWebView(
 
             override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
-                val stringUrl = url
-                if (stringUrl == null) {
-                    return
-                }
+                val stringUrl = url ?: return
 
-                if (isStreamingDomain(stringUrl) && com.kododake.aabrowser.data.BrowserPreferences.isAutoDesktopStreamingEnabled(view.context)) {
+                val isDesktopNeeded = com.kododake.aabrowser.data.BrowserPreferences.isDesktopModeForUrl(view.context, stringUrl)
+                val currentDesktop = (view.getTag(R.id.webview_desktop_mode_tag) as? Boolean) ?: false
+                if (isDesktopNeeded != currentDesktop) {
                     val currentProfile = (view.getTag(R.id.webview_user_agent_profile_tag) as? String)
                         ?.let { UserAgentProfile.fromKey(it) } ?: UserAgentProfile.ANDROID_CHROME
-                    view.applyBrowserIdentity(currentProfile, desktop = true)
+                    view.applyBrowserIdentity(currentProfile, desktop = isDesktopNeeded)
+                    view.reload()
+                    return
                 }
 
                 val uri = Uri.parse(stringUrl)
@@ -367,8 +378,9 @@ fun WebView.releaseCompletely() {
     destroy()
 }
 
-private fun WebView.applyBrowserIdentity(profile: UserAgentProfile, desktop: Boolean) {
+fun WebView.applyBrowserIdentity(profile: UserAgentProfile, desktop: Boolean) {
     setTag(R.id.webview_user_agent_profile_tag, profile.storageKey)
+    setTag(R.id.webview_desktop_mode_tag, desktop)
     settings.userAgentString = buildUserAgent(profile, desktop)
     settings.useWideViewPort = desktop
     settings.loadWithOverviewMode = desktop

@@ -45,6 +45,7 @@ class BrowserUIManager(
         fun handleQuickActionButtonPressed()
         fun resolveThemeColor(attrRes: Int): Int
         fun showMenuButtonTemporarily()
+        fun getCurrentUrl(): String = ""
     }
 
     private var isSyncingAddressFields: Boolean = false
@@ -275,6 +276,7 @@ class BrowserUIManager(
             }
         }
         binding.menuFab.hide()
+        binding.desktopSwitch.isChecked = BrowserPreferences.isDesktopModeForUrl(activity, callbacks.getCurrentUrl())
         bookmarkManager.refreshBookmarks()
         tabManager.refreshTabs()
         startPageManager.refreshStartPage()

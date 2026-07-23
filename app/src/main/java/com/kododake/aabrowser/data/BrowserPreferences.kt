@@ -127,9 +127,46 @@ object BrowserPreferences {
             .apply()
     }
 
+    private const val KEY_DESKTOP_HOSTS_SET = "desktop_hosts_set"
+
     fun shouldUseDesktopMode(context: Context): Boolean {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getBoolean(KEY_DESKTOP_MODE, false)
+    }
+
+    fun isDesktopModeForUrl(context: Context, url: String?): Boolean {
+        if (url.isNullOrBlank()) return false
+        val host = runCatching { Uri.parse(url).host?.lowercase() }.getOrNull() ?: return false
+
+        if (isStreamingHost(host) && isAutoDesktopStreamingEnabled(context)) {
+            return true
+        }
+
+        val set = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getStringSet(KEY_DESKTOP_HOSTS_SET, emptySet()) ?: emptySet()
+        return set.contains(host)
+    }
+
+    fun toggleDesktopModeForUrl(context: Context, url: String?): Boolean {
+        if (url.isNullOrBlank()) return false
+        val host = runCatching { Uri.parse(url).host?.lowercase() }.getOrNull() ?: return false
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val set = prefs.getStringSet(KEY_DESKTOP_HOSTS_SET, emptySet())?.toMutableSet() ?: mutableSetOf()
+
+        val newState = if (set.contains(host)) {
+            set.remove(host)
+            false
+        } else {
+            set.add(host)
+            true
+        }
+        prefs.edit().putStringSet(KEY_DESKTOP_HOSTS_SET, set).apply()
+        return newState
+    }
+
+    private fun isStreamingHost(host: String): Boolean {
+        val streamingHosts = listOf("netflix.com", "disneyplus.com", "primevideo.com", "amazon.com", "nflxext.com", "disney-plus.net")
+        return streamingHosts.any { host == it || host.endsWith(".$it") }
     }
 
     fun toggleDesktopMode(context: Context): Boolean {
