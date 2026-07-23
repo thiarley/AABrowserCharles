@@ -157,10 +157,10 @@
     <string name="sponsors_copied">Address copied to clipboard</string>
 
     <string name="settings_sponsors_list">Sponsors</string>
-    <string name="settings_sponsors_list_description">A huge thank you to our amazing sponsors! Your support keeps this project running and upgrades my regular tea to premium Matcha or a bottomless pot of coffee! 🍵☕</string>
-    <string name="sponsor_message_from_developer">From kododake: %1$s</string>
+    <string name="settings_sponsors_list_description">A huge thank you to our amazing sponsors! Your support keeps this project running and upgrades our regular tea to premium Matcha or a bottomless pot of coffee! 🍵☕</string>
+    <string name="sponsor_message_from_developer">From kododake &amp; CharlesJose: %1$s</string>
     <string name="settings_sponsors_hide_title">Hide Sponsors? 🥺</string>
-    <string name="settings_sponsors_hide_message">This app is developed and maintained by kododake and our amazing contributors. Sponsoring helps kododake buy premium Matcha or coffee to fuel AABrowser\'s engine! If you hide them, kododake might code slower... 😭🍵\n\nAre you sure you want to hide the sponsors list?</string>
+    <string name="settings_sponsors_hide_message">This app is developed and maintained by kododake, CharlesJose and our amazing contributors. Sponsoring helps buy premium Matcha or coffee to fuel AABrowserCharlesJose\'s engine! If you hide them, developers might code slower... 😭🍵\n\nAre you sure you want to hide the sponsors list?</string>
     <string name="settings_sponsors_hide_keep">Keep Visible 🥺</string>
     <string name="settings_sponsors_hide_confirm">Hide Anyway 😭</string>
     <string name="settings_sponsors_hide_switch_title">Hide sponsors list on start page</string>
@@ -175,12 +175,12 @@
     <string name="open_source_licenses_title">Open-source Licenses</string>
     
     <string name="sponsors_title">Sponsors</string>
-    <string name="kododake_name">kododake (Lead)</string>
+    <string name="kododake_name">kododake &amp; CharlesJose</string>
     <string name="menu_start_page">Start Page</string>
     <string name="menu_start_page_add_current">Add current page to start page</string>
     <string name="menu_home_page_set_current">Set current page as home page</string>
     <string name="start_page_title">Start Page</string>
-    <string name="start_page_headline">AABrowser</string>
+    <string name="start_page_headline">AABrowserCharlesJose</string>
     <string name="start_page_subtitle">Quick access for the sites you use most.</string>
     <string name="start_page_card_title">Quick Links</string>
     <string name="start_page_card_subtitle">Pin up to six sites from the bookmarks menu.</string>
@@ -233,7 +233,7 @@
     <string name="media_notification_channel_description">Controls media playback in web pages</string>
     <string name="media_notification_content_text">Playing media in WebView</string>
     <string name="ssl_error_title">Security Warning</string>
-    <string name="ssl_error_message">AABrowser detected a problem with the security certificate of this website (%1$s).\n\nThis connection is not secure, and someone might be trying to intercept your data.</string>
+    <string name="ssl_error_message">AABrowserCharlesJose detected a problem with the security certificate of this website (%1$s).\n\nThis connection is not secure, and someone might be trying to intercept your data.</string>
     <string name="ssl_error_reason_prefix">Reason:</string>
     <string name="ssl_error_expired">The certificate has expired.</string>
     <string name="ssl_error_idmismatch">The certificate hostname does not match the website address.</string>
@@ -278,7 +278,7 @@
     <string name="settings_app_lock_invalid_pin">Incorrect PIN. Try again.</string>
     <string name="settings_app_lock_pins_dont_match">PINs do not match. Try again.</string>
     <string name="settings_app_lock_pin_saved">App Lock PIN saved.</string>
-    <string name="app_lock_screen_title">AABrowser Locked</string>
+    <string name="app_lock_screen_title">AABrowserCharlesJose Locked</string>
     <string name="app_lock_screen_subtitle">Enter 4-digit PIN to access browser</string>
     <string name="menu_lock_app_now">Lock App Now</string>
 
