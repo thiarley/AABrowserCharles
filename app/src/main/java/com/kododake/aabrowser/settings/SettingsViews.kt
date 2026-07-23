@@ -36,8 +36,8 @@ import com.google.zxing.qrcode.QRCodeWriter
 import com.kododake.aabrowser.R
 import com.kododake.aabrowser.data.BrowserPreferences
 import com.kododake.aabrowser.model.AppThemeMode
-import com.kododake.aabrowser.model.InMotionVideoMode
 import com.kododake.aabrowser.model.QuickActionButtonMode
+
 import com.kododake.aabrowser.model.QuickActionButtonPosition
 import com.kododake.aabrowser.model.UserAgentProfile
 
@@ -51,9 +51,9 @@ data class SettingsCallbacks(
     val onPickStartPageBackground: (() -> Unit)? = null,
     val onClearStartPageBackground: (() -> Unit)? = null,
     val onSponsorsVisibilityChanged: () -> Unit = {},
-    val onVideoInMotionChanged: () -> Unit = {},
     val onClearSslExceptions: () -> Unit = {}
 )
+
 
 object SettingsViews {
     fun createSettingsContent(
@@ -629,67 +629,6 @@ object SettingsViews {
         startupCard.addView(startupInner)
         container.addView(startupCard)
 
-        // Card: Video in Motion
-        val videoInMotionCard = createStyledCard()
-        val videoInMotionInner = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(8), dp(16), dp(8), dp(16))
-        }
-        videoInMotionInner.addView(
-            createSectionTitle(
-                context.getString(R.string.settings_video_in_motion_title),
-                R.drawable.new_window_24px,
-                bottomPaddingDp = 8
-            )
-        )
-
-        val currentVideoMode = BrowserPreferences.getInMotionVideoMode(context)
-        val videoModeStatusText = when (currentVideoMode) {
-            InMotionVideoMode.CONTINUE -> context.getString(R.string.settings_video_in_motion_continue)
-            InMotionVideoMode.PAUSE -> context.getString(R.string.settings_video_in_motion_pause)
-            InMotionVideoMode.FLOATING_PIP -> context.getString(R.string.settings_video_in_motion_floating_pip)
-            InMotionVideoMode.AUDIO_ONLY -> context.getString(R.string.settings_video_in_motion_audio_only)
-        }
-        val videoInMotionRow = createSettingRow(
-            title = context.getString(R.string.settings_video_in_motion_title),
-            statusText = videoModeStatusText,
-            iconRes = R.drawable.new_window_24px
-        ) {
-            val options = arrayOf(
-                context.getString(R.string.settings_video_in_motion_continue),
-                context.getString(R.string.settings_video_in_motion_pause),
-                context.getString(R.string.settings_video_in_motion_floating_pip),
-                context.getString(R.string.settings_video_in_motion_audio_only)
-            )
-            val selectedIndex = when (currentVideoMode) {
-                InMotionVideoMode.CONTINUE -> 0
-                InMotionVideoMode.PAUSE -> 1
-                InMotionVideoMode.FLOATING_PIP -> 2
-                InMotionVideoMode.AUDIO_ONLY -> 3
-            }
-            MaterialAlertDialogBuilder(context, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
-                .setTitle(R.string.settings_video_in_motion_title)
-                .setSingleChoiceItems(options, selectedIndex) { dialog, which ->
-                    dialog.dismiss()
-                    val newMode = when (which) {
-                        1 -> InMotionVideoMode.PAUSE
-                        2 -> InMotionVideoMode.FLOATING_PIP
-                        3 -> InMotionVideoMode.AUDIO_ONLY
-                        else -> InMotionVideoMode.CONTINUE
-                    }
-                    if (newMode != currentVideoMode) {
-                        BrowserPreferences.setInMotionVideoMode(context, newMode)
-                        callbacks.onVideoInMotionChanged()
-                    }
-                }
-                .show()
-        }
-        videoInMotionInner.addView(videoInMotionRow)
-        videoInMotionCard.addView(videoInMotionInner)
-        container.addView(videoInMotionCard)
-
-
-
         // Card: Streaming & SSL Compatibility
         val streamingCard = createStyledCard()
         val streamingInner = LinearLayout(context).apply {
@@ -805,113 +744,8 @@ object SettingsViews {
         securityCard.addView(securityInner)
         container.addView(securityCard)
 
-        // Card: EV Telemetry Dashboard
-        val evCard = createStyledCard()
-        val evInner = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(8), dp(16), dp(8), dp(16))
-        }
-        evInner.addView(
-            createSectionTitle(
-                context.getString(R.string.settings_ev_dashboard_title),
-                R.drawable.devices_other_24px,
-                bottomPaddingDp = 8
-            )
-        )
-
-        val evToggleRow = createSettingSwitchRow(
-            title = context.getString(R.string.settings_ev_dashboard_toggle),
-            description = context.getString(R.string.settings_ev_dashboard_description),
-            iconRes = R.drawable.devices_other_24px,
-            isCheckedValue = BrowserPreferences.isEvDashboardEnabled(context)
-        ) { isChecked ->
-            BrowserPreferences.setEvDashboardEnabled(context, isChecked)
-        }
-        evInner.addView(evToggleRow)
-
-        val currentEvPos = BrowserPreferences.getEvDashboardPosition(context)
-        val posText = when (currentEvPos) {
-            "top_left" -> context.getString(R.string.ev_dashboard_top_left)
-            "bottom_right" -> context.getString(R.string.ev_dashboard_bottom_right)
-            "bottom_left" -> context.getString(R.string.ev_dashboard_bottom_left)
-            else -> context.getString(R.string.ev_dashboard_top_right)
-        }
-        val evPosRow = createSettingRow(
-            title = context.getString(R.string.settings_ev_dashboard_position),
-            statusText = posText,
-            iconRes = R.drawable.devices_other_24px
-        ) {
-            val options = arrayOf(
-                context.getString(R.string.ev_dashboard_top_right),
-                context.getString(R.string.ev_dashboard_top_left),
-                context.getString(R.string.ev_dashboard_bottom_right),
-                context.getString(R.string.ev_dashboard_bottom_left)
-            )
-            MaterialAlertDialogBuilder(context, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
-                .setTitle(R.string.settings_ev_dashboard_position)
-                .setItems(options) { _, which ->
-                    val selectedKey = when (which) {
-                        1 -> "top_left"
-                        2 -> "bottom_right"
-                        3 -> "bottom_left"
-                        else -> "top_right"
-                    }
-                    BrowserPreferences.setEvDashboardPosition(context, selectedKey)
-                    Toast.makeText(context, "Posição atualizada", Toast.LENGTH_SHORT).show()
-                }
-                .show()
-        }
-        evInner.addView(evPosRow)
-
-        val currentEngineType = BrowserPreferences.getVehicleType(context)
-        val engineTypeText = when (currentEngineType) {
-            "combustion" -> context.getString(R.string.vehicle_type_combustion)
-            "ev" -> context.getString(R.string.vehicle_type_ev)
-            else -> context.getString(R.string.vehicle_type_auto)
-        }
-        val vehicleTypeRow = createSettingRow(
-            title = context.getString(R.string.settings_vehicle_type),
-            statusText = engineTypeText,
-            iconRes = R.drawable.devices_other_24px
-        ) {
-            val options = arrayOf(
-                context.getString(R.string.vehicle_type_auto),
-                context.getString(R.string.vehicle_type_ev),
-                context.getString(R.string.vehicle_type_combustion)
-            )
-            MaterialAlertDialogBuilder(context, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
-                .setTitle(R.string.settings_vehicle_type)
-                .setItems(options) { _, which ->
-                    val selectedType = when (which) {
-                        1 -> "ev"
-                        2 -> "combustion"
-                        else -> "auto"
-                    }
-                    BrowserPreferences.setVehicleType(context, selectedType)
-                    Toast.makeText(context, "Tipo de veículo atualizado", Toast.LENGTH_SHORT).show()
-                }
-                .show()
-        }
-        evInner.addView(vehicleTypeRow)
-
-        val evLogsRow = createSettingRow(
-            title = "Logs de Diagnóstico da Telemetria",
-            statusText = "Ver histórico de GPS e eventos do veículo",
-            iconRes = R.drawable.devices_other_24px
-        ) {
-            val activity = context as? com.kododake.aabrowser.MainActivity
-            val logs = activity?.evTelemetryManager?.getDiagnosticLogs() ?: "Telemetria inativa ou indisponível."
-            MaterialAlertDialogBuilder(context, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
-                .setTitle("Logs de Diagnóstico de Telemetria")
-                .setMessage(logs)
-                .setPositiveButton("Fechar", null)
-                .show()
-        }
-        evInner.addView(evLogsRow)
-        evCard.addView(evInner)
-        container.addView(evCard)
-
         val inAppControlsCard = createStyledCard()
+
         val inAppControlsInner = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(8), dp(16), dp(8), dp(16))

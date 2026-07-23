@@ -13,6 +13,7 @@
 > **Aviso de Segurança ao Motorista**
 > 
 > O motorista **NÃO DEVE** assistir a vídeos ou olhar para mídias interativas enquanto estiver dirigindo. As opções de reprodução de vídeo em movimento (como Mini-Player flutuante PiP ou modo Áudio em Movimento) são **DESTINADAS EXCLUSIVAMENTE AOS PASSAGEIROS** para entretenimento seguro. O motorista deve manter total atenção no trânsito e na via durante todo o percurso. Por padrão, o aplicativo minimiza o vídeo e mantém apenas o áudio ao detectar movimento do veículo.
+> O motorista **NÃO DEVE** assistir a vídeos ou olhar para mídias interativas enquanto estiver dirigindo. As opções de reprodução de vídeo em movimento (como Mini-Player flutuante PiP ou modo Áudio em Movimento) são **DESTINADAS EXCLUSIVAMENTE AOS PASSAGEIROS** para entretenimento seguro. O motorista deve manter total atenção no trânsito e da via durante todo o percurso. Por padrão, o aplicativo minimiza o vídeo e mantém apenas o áudio ao detectar movimento do veículo.
 
 ---
 
@@ -26,23 +27,9 @@
 ## 🌟 Lista Completa de Funcionalidades
 
 ### 🚗 Funcionalidades Automotivas & Condução
-* ⚡ **Painel Universal de Telemetria Automotiva (*EV & Combustion HUD*):**
-  * **Modo Elétrico (EV):** Exibe Nível de Bateria ($\%$), Autonomia Restante ($\text{km}$), Potência Instantânea ($\text{kW}$ aceleração/regeneração), Velocidade ($\text{km/h}$) e Temperatura Externa ($\text{°C}$).
-  * **Modo Combustão:** Exibe Nível de Combustível ($\%$), Autonomia ($\text{km}$), Consumo Médio ($\text{km/L}$), Velocidade ($\text{km/h}$) e Temperatura Externa ($\text{°C}$).
-  * **Modo Detecção Automática (*Auto-Detect*):** Identifica o tipo de propulsão do veículo automaticamente.
-  * **Barra de Progresso Dinâmica (`evGaugeBar`):** Indicador em arco com transição automática de cores (🟢 Verde $>50\%$, 🟡 Amarelo $20-50\%$, 🔴 Vermelho $<20\%$).
-  * **Posicionamento Flutuante Personalizado:** Mova o painel flutuante para o Topo Direita, Topo Esquerda, Roda-pé Direita ou Roda-pé Esquerda.
 * 🎬 **Compatibilidade com Streaming & Persistência SSL (Netflix, Disney+, Prime Video):**
   * **Modo Desktop Automático:** Aplica o User Agent Desktop em sites de streaming para liberar os Web Players oficiais sem telas de bloqueio mobile.
   * **Propagação e Persistência de SSL:** Aprovação automática e salvamento permanente de certificados SSL para domínios e CDNs parceiras (`*.nflxext.com`, `*.disney-plus.net`, etc.).
-* 🚗 **Controle de Vídeo em Movimento (4 Modos):**
-  * 1) Continuar reproduzindo normalmente
-  * 2) Parar vídeo (mantendo o aplicativo aberto)
-  * 3) Mini-Player flutuante (Picture-in-Picture no canto da tela)
-  * 4) Minimizar app e manter apenas o áudio em segundo plano (`ForegroundService`)
-* 🗺️ **Tela Dividida Dupla (*Split Screen Mapa + Navegador*):**
-  * Visualização lado a lado do Google Maps e do Navegador/YouTube no estilo YouTube Music.
-  * Botão flutuante para alternar os lados com um toque (*Mapa na Esquerda | Navegador na Direita* ou vice-versa).
 
 ### 🔐 Funcionalidades de Criptografia & Privacidade
 * 🔐 **Bloqueio por PIN de Segurança (*App Lock*):**
@@ -52,7 +39,7 @@
   * Módulo `UmamiTracker` totalmente removido do código-fonte. Zero estatísticas ou métricas enviadas para a internet.
 
 ### 🌐 Recursos Principais do Navegador
-* 🗂️ **Gerenciador de Abas & Restauração de Sessão:** Abra múltiplas abas, troque/feche abas facilmente e restao de sessão ao reiniciar o app.
+* 🗂️ **Gerenciador de Abas & Restauração de Sessão:** Abra múltiplas abas, troque/feche abas facilmente e restauração de sessão ao reiniciar o app.
 * 🎨 **Tema Claro + AMOLED Escuro + Páginas Escuras:** Tema claro, tema escuro AMOLED (preto puro) e escurecimento forçado de páginas web.
 * 🏠 **Página Inicial Personalizada & Atalhos Rápidos:** Atalhos visuais Material 3 para YouTube, Netflix, Disney+, Prime Video, Spotify e Google Maps.
 * 🧭 **Barra de Endereço Persistente & Botão Flutuante (FAB):** Barra de URL compacta superior e botão flutuante com posição e ação personalizáveis.

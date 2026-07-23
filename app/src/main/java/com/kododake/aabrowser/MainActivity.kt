@@ -38,13 +38,9 @@ import com.kododake.aabrowser.web.applyBrowserIdentity
 import com.kododake.aabrowser.databinding.ActivityMainBinding
 import android.widget.LinearLayout
 import com.kododake.aabrowser.media.AudioBackgroundService
-import com.kododake.aabrowser.model.InMotionVideoMode
 import com.kododake.aabrowser.model.QuickActionButtonMode
 import com.kododake.aabrowser.model.UserAgentProfile
 import com.kododake.aabrowser.AppConstants
-import com.kododake.aabrowser.ev.EvTelemetryData
-import com.kododake.aabrowser.ev.EvTelemetryManager
-import com.kododake.aabrowser.motion.MotionDetector
 import com.kododake.aabrowser.navigation.NavigationManager
 import com.kododake.aabrowser.security.AppLockManager
 import com.kododake.aabrowser.permissions.PermissionManager
@@ -103,24 +99,13 @@ class MainActivity : AppCompatActivity() {
         OverlayManager(this, binding, tabManager, bookmarkManager, startPageManager, uiManager, createOverlayCallbacks()) 
     }
 
-    private val motionDetector: MotionDetector by lazy {
-        MotionDetector(this) { inMotion ->
-            onVehicleMotionStateChanged(inMotion)
-        }
-    }
-
     private val appLockManager: AppLockManager by lazy {
         AppLockManager(this)
     }
 
-    val evTelemetryManager: EvTelemetryManager by lazy {
-        EvTelemetryManager(this) { data ->
-            updateEvDashboardUi(data)
-        }
-    }
-
     private var currentEnteredPin = ""
     private var isMapLoaded = false
+
 
     private val isDebugBuild: Boolean by lazy { 
         val flags = applicationInfo.flags
@@ -232,18 +217,15 @@ class MainActivity : AppCompatActivity() {
         syncUserAgentProfile()
         uiManager.applyPersistentAddressBarPreference()
         uiManager.applyQuickActionButtonPreferences()
-        motionDetector.start()
         checkAppLock()
-        updateEvDashboardState()
     }
 
     override fun onPause() {
-        motionDetector.stop()
-        evTelemetryManager.stop()
         uiManager.exitFullscreen()
         webView?.onPause()
         super.onPause()
     }
+
 
     override fun onDestroy() {
         handler.removeCallbacks(autoHideMenuFab)
@@ -778,57 +760,9 @@ class MainActivity : AppCompatActivity() {
             latestReleaseUrl = latestUrl
         }
 
-        override fun onVideoInMotionChanged() {
-            onVehicleMotionStateChanged(motionDetector.isCurrentlyInMotion())
-        }
-
         override fun onClearSslExceptions() {
             com.kododake.aabrowser.web.SslErrorHandlerHelper.clearAllowedSslHosts(this@MainActivity)
         }
-    }
-
-    private fun onVehicleMotionStateChanged(inMotion: Boolean) {
-        val mode = BrowserPreferences.getInMotionVideoMode(this)
-        if (!inMotion) {
-            AudioBackgroundService.stopAudioService(this)
-            restoreNormalVideoAndLayout()
-            return
-        }
-
-        when (mode) {
-            InMotionVideoMode.CONTINUE -> {
-                // Manter reprodução normal
-            }
-            InMotionVideoMode.PAUSE -> {
-                webView?.evaluateJavascript("document.querySelectorAll('video').forEach(v => v.pause());", null)
-            }
-            InMotionVideoMode.FLOATING_PIP -> {
-                applyFloatingPipLayout(true)
-            }
-            InMotionVideoMode.AUDIO_ONLY -> {
-                AudioBackgroundService.startAudioService(this)
-                binding.webViewContainer.visibility = View.INVISIBLE
-                moveTaskToBack(true)
-            }
-        }
-    }
-
-    private fun restoreNormalVideoAndLayout() {
-        binding.webViewContainer.visibility = View.VISIBLE
-        applyFloatingPipLayout(false)
-    }
-
-    private fun applyFloatingPipLayout(enablePip: Boolean) {
-        val lp = binding.webViewContainer.layoutParams
-        if (enablePip) {
-            val density = resources.displayMetrics.density
-            lp.width = (320 * density).toInt()
-            lp.height = (200 * density).toInt()
-        } else {
-            lp.width = 0
-            lp.height = LinearLayout.LayoutParams.MATCH_PARENT
-        }
-        binding.webViewContainer.layoutParams = lp
     }
 
     private fun checkAppLock() {
@@ -897,92 +831,6 @@ class MainActivity : AppCompatActivity() {
         binding.appLockPinDots.text = dots
     }
 
-    private var evTouchDx = 0f
-    private var evTouchDy = 0f
-
-    @android.annotation.SuppressLint("ClickableViewAccessibility")
-    private fun setupEvDashboardTouchDrag() {
-        binding.evDashboardWidget.setOnTouchListener { v, event ->
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    evTouchDx = v.x - event.rawX
-                    evTouchDy = v.y - event.rawY
-                    true
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    v.x = event.rawX + evTouchDx
-                    v.y = event.rawY + evTouchDy
-                    true
-                }
-                else -> false
-            }
-        }
-    }
-
-    private fun updateEvDashboardState() {
-        val enabled = BrowserPreferences.isEvDashboardEnabled(this)
-        setupEvDashboardTouchDrag()
-        binding.btnCloseEvDashboard.setOnClickListener {
-            BrowserPreferences.setEvDashboardEnabled(this, false)
-            updateEvDashboardState()
-        }
-        if (enabled) {
-            applyEvDashboardPosition()
-            evTelemetryManager.start()
-        } else {
-            binding.evDashboardWidget.visibility = View.GONE
-            evTelemetryManager.stop()
-        }
-    }
-
-    private fun applyEvDashboardPosition() {
-        if (!::binding.isInitialized) return
-        val position = BrowserPreferences.getEvDashboardPosition(this)
-        val gravity = when (position) {
-            "top_left" -> android.view.Gravity.TOP or android.view.Gravity.START
-            "bottom_right" -> android.view.Gravity.BOTTOM or android.view.Gravity.END
-            "bottom_left" -> android.view.Gravity.BOTTOM or android.view.Gravity.START
-            else -> android.view.Gravity.TOP or android.view.Gravity.END
-        }
-        val lp = binding.evDashboardWidget.layoutParams
-        if (lp is androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams) {
-            lp.gravity = gravity
-            binding.evDashboardWidget.layoutParams = lp
-        } else if (lp is android.widget.FrameLayout.LayoutParams) {
-            lp.gravity = gravity
-            binding.evDashboardWidget.layoutParams = lp
-        }
-    }
-
-    private fun updateEvDashboardUi(data: EvTelemetryData) {
-        val enabled = BrowserPreferences.isEvDashboardEnabled(this)
-        if (!enabled) {
-            binding.evDashboardWidget.visibility = View.GONE
-            return
-        }
-        binding.evDashboardWidget.visibility = View.VISIBLE
-
-        val pct = data.fuelOrBatteryPercent.coerceIn(0, 100)
-        binding.evGaugeBar.progress = pct
-        val gaugeColor = when {
-            pct > 50 -> android.graphics.Color.parseColor("#00E676")
-            pct > 20 -> android.graphics.Color.parseColor("#FFD54F")
-            else -> android.graphics.Color.parseColor("#FF5252")
-        }
-        binding.evGaugeBar.setIndicatorColor(gaugeColor)
-
-        if (data.engineType == com.kododake.aabrowser.ev.VehicleEngineType.COMBUSTION) {
-            binding.evBatteryText.text = "⛽ ${pct}% (${data.rangeKm} km)"
-            binding.evPowerText.text = "⛽ ${"%.1f".format(data.powerOrConsumption)} km/L"
-        } else {
-            binding.evBatteryText.text = "🔋 ${pct}% (${data.rangeKm} km)"
-            val powerSign = if (data.powerOrConsumption >= 0) "+" else ""
-            binding.evPowerText.text = "⚡ $powerSign${"%.1f".format(data.powerOrConsumption)} kW"
-        }
-        binding.evSpeedText.text = "🚗 ${data.speedKmH.toInt()} km/h"
-        binding.evTempText.text = "🌡️ ${data.tempCelsius.toInt()} °C"
-    }
-
     private fun setupWindowInsetsAndCoolwalk() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
             val sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -990,14 +838,6 @@ class MainActivity : AppCompatActivity() {
             insets
         }
     }
-
-    override fun onMultiWindowModeChanged(isInMultiWindowMode: Boolean, newConfig: android.content.res.Configuration) {
-        super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig)
-        applyEvDashboardPosition()
-    }
-
-    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
-        super.onConfigurationChanged(newConfig)
-        applyEvDashboardPosition()
-    }
 }
+
+

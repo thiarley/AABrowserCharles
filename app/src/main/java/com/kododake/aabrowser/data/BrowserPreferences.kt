@@ -6,8 +6,8 @@ import android.net.Uri
 import android.util.DisplayMetrics
 import android.util.Patterns
 import com.kododake.aabrowser.model.AppThemeMode
-import com.kododake.aabrowser.model.InMotionVideoMode
 import com.kododake.aabrowser.model.QuickActionButtonMode
+
 import com.kododake.aabrowser.model.QuickActionButtonPosition
 import com.kododake.aabrowser.model.UserAgentProfile
 import com.kododake.aabrowser.web.CryptoHelper
@@ -50,17 +50,15 @@ object BrowserPreferences {
     private const val KEY_HOME_PAGE_URL = "home_page_url"
     private const val KEY_ALLOWED_LOCATION_HOSTS = "allowed_location_hosts"
     private const val KEY_HIDE_SPONSORS = "hide_sponsors"
-    private const val KEY_IN_MOTION_VIDEO_MODE = "in_motion_video_mode"
     private const val KEY_SPLIT_SCREEN_MODE = "split_screen_mode"
+
     private const val KEY_AUTO_DESKTOP_STREAMING = "auto_desktop_streaming"
     private const val KEY_PERSISTENT_SSL_HOSTS = "persistent_ssl_hosts"
     private const val KEY_APP_LOCK_ENABLED = "app_lock_enabled"
     private const val KEY_APP_LOCK_PIN_HASH = "app_lock_pin_hash"
     private const val KEY_USE_BIOMETRIC_LOCK = "use_biometric_lock"
-    private const val KEY_EV_DASHBOARD_ENABLED = "ev_dashboard_enabled"
-    private const val KEY_EV_DASHBOARD_POSITION = "ev_dashboard_position"
-    private const val KEY_VEHICLE_TYPE = "vehicle_type"
     private const val DEFAULT_URL = "https://www.google.com"
+
     private const val SEARCH_TEMPLATE = "https://www.google.com/search?q=%s"
 
     private val DEFAULT_BOOKMARKS = listOf(
@@ -752,22 +750,8 @@ object BrowserPreferences {
             .apply()
     }
 
-    fun getInMotionVideoMode(context: Context): InMotionVideoMode {
-        val key = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getString(KEY_IN_MOTION_VIDEO_MODE, InMotionVideoMode.CONTINUE.storageKey)
-        return InMotionVideoMode.fromKey(key)
-    }
-
-    fun setInMotionVideoMode(context: Context, mode: InMotionVideoMode) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putString(KEY_IN_MOTION_VIDEO_MODE, mode.storageKey)
-            .apply()
-    }
-
-
-
     fun isAutoDesktopStreamingEnabled(context: Context): Boolean {
+
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getBoolean(KEY_AUTO_DESKTOP_STREAMING, true)
     }
@@ -843,43 +827,8 @@ object BrowserPreferences {
             .apply()
     }
 
-    fun isEvDashboardEnabled(context: Context): Boolean {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean(KEY_EV_DASHBOARD_ENABLED, false)
-    }
-
-    fun setEvDashboardEnabled(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putBoolean(KEY_EV_DASHBOARD_ENABLED, enabled)
-            .apply()
-    }
-
-    fun getEvDashboardPosition(context: Context): String {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getString(KEY_EV_DASHBOARD_POSITION, "top_right") ?: "top_right"
-    }
-
-    fun setEvDashboardPosition(context: Context, position: String) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putString(KEY_EV_DASHBOARD_POSITION, position)
-            .apply()
-    }
-
-    fun getVehicleType(context: Context): String {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getString(KEY_VEHICLE_TYPE, "auto") ?: "auto"
-    }
-
-    fun setVehicleType(context: Context, type: String) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putString(KEY_VEHICLE_TYPE, type)
-            .apply()
-    }
-
     private fun isHttpOrHttps(url: String?): Boolean {
+
         if (url.isNullOrBlank()) return false
         val scheme = runCatching { Uri.parse(url).scheme?.lowercase() }.getOrNull()
         return scheme == "http" || scheme == "https"

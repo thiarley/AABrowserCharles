@@ -35,9 +35,9 @@ class OverlayManager(
         fun onHomePageChanged()
         fun onPickBackgroundRequested()
         fun onVersionInfoReceived(latestUrl: String, tagName: String)
-        fun onVideoInMotionChanged()
         fun onClearSslExceptions()
     }
+
 
     fun showQrCodeView(url: String) {
         if (url.isBlank()) {
@@ -147,10 +147,8 @@ class OverlayManager(
                 onSponsorsVisibilityChanged = {
                     startPageManager.refreshStartPage()
                 },
-                onVideoInMotionChanged = {
-                    callbacks.onVideoInMotionChanged()
-                },
                 onClearSslExceptions = {
+
                     com.kododake.aabrowser.web.SslErrorHandlerHelper.clearAllowedSslHosts(activity)
                     callbacks.onClearSslExceptions()
                 }

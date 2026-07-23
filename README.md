@@ -26,23 +26,9 @@
 ## 🌟 Comprehensive Features (Complete List)
 
 ### 🚗 Vehicle & Driving Features
-* ⚡ **Universal Vehicle Telemetry Dashboard (EV & Combustion HUD):**
-  * **EV Mode:** Displays Battery Charge ($\%$), Estimated Range ($\text{km}$), Instantaneous Power ($\text{kW}$ acceleration/regen), Speed ($\text{km/h}$), and Outside Temp ($\text{°C}$).
-  * **Combustion Mode:** Displays Fuel Level ($\%$), Range ($\text{km}$), Average Consumption ($\text{km/L}$), Speed ($\text{km/h}$), and Outside Temp ($\text{°C}$).
-  * **Auto-Detect Engine Type:** Automatically identifies vehicle propulsion type.
-  * **Dynamic HUD Gauge Bar:** Curved progress indicator with color transitions (🟢 Green $>50\%$, 🟡 Yellow $20-50\%$, 🔴 Red $<20\%$).
-  * **Customizable Floating Position:** Move the HUD to Top Right, Top Left, Bottom Right, or Bottom Left.
 * 🎬 **Streaming Compatibility & Persistent SSL (Netflix, Disney+, Prime Video):**
   * **Auto-Desktop Mode:** Enforces Desktop User Agent on streaming sites to load official Web Players without mobile block screens.
   * **Subdomain SSL Propagation & Persistence:** Automatic wildcard SSL approval for streaming CDNs (`*.nflxext.com`, `*.disney-plus.net`, etc.) saved permanently in preferences.
-* 🚗 **Video Playback in Motion (4 Modes):**
-  * 1) Continue video normally
-  * 2) Pause video (keep app open)
-  * 3) Floating Mini-Player (Picture-in-Picture in screen corner)
-  * 4) Minimize app and keep audio playing in background (`ForegroundService`)
-* 🗺️ **Dual-Pane Split Screen (Map + Browser):**
-  * YouTube Music-style side-by-side view with Google Maps and Browser/YouTube.
-  * One-tap floating button to swap sides (*Map Left | Browser Right* or *Browser Left | Map Right*).
 
 ### 🔐 Security & Privacy Features
 * 🔐 **App Lock PIN Privacy Protection:**
