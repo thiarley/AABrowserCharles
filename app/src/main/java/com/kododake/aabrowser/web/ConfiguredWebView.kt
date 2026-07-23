@@ -483,6 +483,17 @@ private const val SAFARI_IOS_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like 
 fun isStreamingDomain(url: String?): Boolean {
     if (url.isNullOrBlank()) return false
     val host = runCatching { Uri.parse(url).host?.lowercase() }.getOrNull() ?: return false
-    val streamingHosts = listOf("netflix.com", "disneyplus.com", "primevideo.com", "amazon.com")
+    val streamingHosts = listOf(
+        "netflix.com",
+        "disneyplus.com",
+        "disney-plus.net",
+        "primevideo.com",
+        "hbomax.com",
+        "max.com",
+        "crunchyroll.com",
+        "apple.com",
+        "paramountplus.com",
+        "nflxext.com"
+    )
     return streamingHosts.any { host == it || host.endsWith(".$it") }
 }

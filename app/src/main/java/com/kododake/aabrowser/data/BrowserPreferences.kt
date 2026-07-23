@@ -66,13 +66,17 @@ object BrowserPreferences {
 
     private val DEFAULT_BOOKMARKS = listOf(
         "https://www.google.com",
-        "https://youtube.com",
-        "https://duckduckgo.com",
-        "https://weather.com",
-        "https://keepandroidopen.org"
+        "https://www.youtube.com",
+        "https://www.netflix.com",
+        "https://www.disneyplus.com/",
+        "https://www.primevideo.com/",
+        "https://www.hbomax.com/",
+        "https://www.crunchyroll.com/",
+        "https://tv.apple.com/",
+        "https://www.paramountplus.com/"
     )
 
-    const val MAX_START_PAGE_SITES = 6
+    const val MAX_START_PAGE_SITES = 9
     const val MAX_OPEN_TABS = 8
     const val MIN_GLOBAL_SCALE_PERCENT = 40
     const val MAX_GLOBAL_SCALE_PERCENT = 200
@@ -165,7 +169,18 @@ object BrowserPreferences {
     }
 
     private fun isStreamingHost(host: String): Boolean {
-        val streamingHosts = listOf("netflix.com", "disneyplus.com", "primevideo.com", "amazon.com", "nflxext.com", "disney-plus.net")
+        val streamingHosts = listOf(
+            "netflix.com",
+            "disneyplus.com",
+            "disney-plus.net",
+            "primevideo.com",
+            "hbomax.com",
+            "max.com",
+            "crunchyroll.com",
+            "apple.com",
+            "paramountplus.com",
+            "nflxext.com"
+        )
         return streamingHosts.any { host == it || host.endsWith(".$it") }
     }
 

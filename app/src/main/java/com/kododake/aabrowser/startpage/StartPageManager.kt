@@ -98,7 +98,7 @@ class StartPageManager(
         }
         
         binding.startPageQuickLinksContainer.apply {
-            layoutManager = GridLayoutManager(activity, 2)
+            layoutManager = GridLayoutManager(activity, 3)
             adapter = startPageAdapter
         }
 
