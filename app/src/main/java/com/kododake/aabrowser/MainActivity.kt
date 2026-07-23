@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.TypedValue
+import android.view.MotionEvent
 import android.view.View
 import android.webkit.WebChromeClient
 import android.widget.Toast
@@ -977,11 +978,37 @@ class MainActivity : AppCompatActivity() {
         binding.appLockPinDots.text = dots
     }
 
+    private var evTouchDx = 0f
+    private var evTouchDy = 0f
+
+    @android.annotation.SuppressLint("ClickableViewAccessibility")
+    private fun setupEvDashboardTouchDrag() {
+        binding.evDashboardWidget.setOnTouchListener { v, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    evTouchDx = v.x - event.rawX
+                    evTouchDy = v.y - event.rawY
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    v.x = event.rawX + evTouchDx
+                    v.y = event.rawY + evTouchDy
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
     private fun updateEvDashboardState() {
         val enabled = BrowserPreferences.isEvDashboardEnabled(this)
+        setupEvDashboardTouchDrag()
+        binding.btnCloseEvDashboard.setOnClickListener {
+            BrowserPreferences.setEvDashboardEnabled(this, false)
+            updateEvDashboardState()
+        }
         if (enabled) {
             applyEvDashboardPosition()
-            binding.evDashboardWidget.visibility = View.VISIBLE
             evTelemetryManager.start()
         } else {
             binding.evDashboardWidget.visibility = View.GONE
@@ -1009,6 +1036,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateEvDashboardUi(data: EvTelemetryData) {
+        val enabled = BrowserPreferences.isEvDashboardEnabled(this)
+        if (!enabled || !data.isConnectedToVehicle) {
+            binding.evDashboardWidget.visibility = View.GONE
+            return
+        }
+        binding.evDashboardWidget.visibility = View.VISIBLE
+
         val pct = data.fuelOrBatteryPercent.coerceIn(0, 100)
         binding.evGaugeBar.progress = pct
         val gaugeColor = when {

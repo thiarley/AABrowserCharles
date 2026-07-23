@@ -1557,15 +1557,16 @@
             android:paddingBottom="10dp">
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
 
                 <TextView
                     android:id="@+id/evBatteryText"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="🔋 78% (320 km)"
                     android:textSize="13sp"
                     android:textStyle="bold"
@@ -1575,11 +1576,22 @@
                     android:id="@+id/evPowerText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="14dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="8dp"
                     android:text="⚡ +14.5 kW"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:textColor="#FFD54F" />
+
+                <ImageView
+                    android:id="@+id/btnCloseEvDashboard"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_close"
+                    android:padding="2dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/menu_close"
+                    app:tint="#A0A0B0" />
             </LinearLayout>
 
             <com.google.android.material.progressindicator.LinearProgressIndicator

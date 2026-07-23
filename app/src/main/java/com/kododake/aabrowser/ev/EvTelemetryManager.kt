@@ -15,6 +15,7 @@ enum class VehicleEngineType {
 }
 
 data class EvTelemetryData(
+    val isConnectedToVehicle: Boolean = false,
     val engineType: VehicleEngineType = VehicleEngineType.EV,
     val fuelOrBatteryPercent: Int = 78,
     val rangeKm: Int = 320,
@@ -101,7 +102,10 @@ class EvTelemetryManager(
         } else {
             0f
         }
-        currentData = currentData.copy(speedKmH = speedKmH)
+        currentData = currentData.copy(
+            speedKmH = speedKmH,
+            isConnectedToVehicle = true
+        )
         updateTelemetryState()
         onTelemetryUpdated(currentData)
     }
