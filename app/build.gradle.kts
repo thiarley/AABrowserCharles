@@ -36,11 +36,13 @@ android {
                     ?: System.getenv(key)
 
             val storeFilePath = getProp("RELEASE_STORE_FILE") ?: "../release.keystore"
-            storeFile = rootProject.file(storeFilePath)
-
-            getProp("RELEASE_STORE_PASSWORD")?.let { storePassword = it }
-            getProp("RELEASE_KEY_ALIAS")?.let { keyAlias = it }
-            getProp("RELEASE_KEY_PASSWORD")?.let { keyPassword = it }
+            val keystoreFile = rootProject.file(storeFilePath)
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                getProp("RELEASE_STORE_PASSWORD")?.let { storePassword = it }
+                getProp("RELEASE_KEY_ALIAS")?.let { keyAlias = it }
+                getProp("RELEASE_KEY_PASSWORD")?.let { keyPassword = it }
+            }
         }
     }
 
@@ -51,7 +53,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            val storeFilePath = (project.findProperty("RELEASE_STORE_FILE") as? String) ?: "../release.keystore"
+            signingConfig = if (rootProject.file(storeFilePath).exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 
