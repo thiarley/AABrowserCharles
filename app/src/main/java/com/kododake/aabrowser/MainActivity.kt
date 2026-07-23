@@ -40,8 +40,8 @@ import android.widget.LinearLayout
 import com.kododake.aabrowser.media.AudioBackgroundService
 import com.kododake.aabrowser.model.InMotionVideoMode
 import com.kododake.aabrowser.model.QuickActionButtonMode
-import com.kododake.aabrowser.model.SplitScreenMode
 import com.kododake.aabrowser.model.UserAgentProfile
+import com.kododake.aabrowser.AppConstants
 import com.kododake.aabrowser.ev.EvTelemetryData
 import com.kododake.aabrowser.ev.EvTelemetryManager
 import com.kododake.aabrowser.motion.MotionDetector
@@ -113,7 +113,7 @@ class MainActivity : AppCompatActivity() {
         AppLockManager(this)
     }
 
-    private val evTelemetryManager: EvTelemetryManager by lazy {
+    val evTelemetryManager: EvTelemetryManager by lazy {
         EvTelemetryManager(this) { data ->
             updateEvDashboardUi(data)
         }
@@ -209,6 +209,7 @@ class MainActivity : AppCompatActivity() {
         setupBackPressHandling()
         
         permissionManager.ensureNotificationPermissionIfNeeded(REQUEST_CODE_POST_NOTIFICATIONS)
+        permissionManager.ensureLocationPermissionIfNeeded(AppConstants.REQUEST_CODE_ACCESS_LOCATION)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -231,7 +232,6 @@ class MainActivity : AppCompatActivity() {
         syncUserAgentProfile()
         uiManager.applyPersistentAddressBarPreference()
         uiManager.applyQuickActionButtonPreferences()
-        applySplitScreenLayout()
         motionDetector.start()
         checkAppLock()
         updateEvDashboardState()
@@ -297,18 +297,6 @@ class MainActivity : AppCompatActivity() {
         uiManager.syncAddressFieldsFrom(binding.addressEdit)
         uiManager.updateAddressClearButtons()
         uiManager.setupManualDragLogic()
-
-        binding.btnSwapSplitScreen.setOnClickListener {
-            val current = BrowserPreferences.getSplitScreenMode(this)
-            val next = if (current == SplitScreenMode.MAP_LEFT_BROWSER_RIGHT) {
-                SplitScreenMode.BROWSER_LEFT_MAP_RIGHT
-            } else {
-                SplitScreenMode.MAP_LEFT_BROWSER_RIGHT
-            }
-            BrowserPreferences.setSplitScreenMode(this, next)
-            applySplitScreenLayout()
-        }
-        applySplitScreenLayout()
         
         val setup = MainActivitySetup(
             this,
@@ -794,10 +782,6 @@ class MainActivity : AppCompatActivity() {
             onVehicleMotionStateChanged(motionDetector.isCurrentlyInMotion())
         }
 
-        override fun onSplitScreenChanged() {
-            applySplitScreenLayout()
-        }
-
         override fun onClearSslExceptions() {
             com.kododake.aabrowser.web.SslErrorHandlerHelper.clearAllowedSslHosts(this@MainActivity)
         }
@@ -826,71 +810,6 @@ class MainActivity : AppCompatActivity() {
                 binding.webViewContainer.visibility = View.INVISIBLE
                 moveTaskToBack(true)
             }
-        }
-    }
-
-    private fun applySplitScreenLayout() {
-        if (!::binding.isInitialized) return
-        val mode = BrowserPreferences.getSplitScreenMode(this)
-        val mapContainer = binding.mapContainer
-        val webViewContainer = binding.webViewContainer
-        val splitContainer = binding.splitScreenContainer
-        val btnSwap = binding.btnSwapSplitScreen
-
-        when (mode) {
-            SplitScreenMode.DISABLED -> {
-                mapContainer.visibility = View.GONE
-                btnSwap.visibility = View.GONE
-                if (webViewContainer.parent != splitContainer) {
-                    (webViewContainer.parent as? android.view.ViewGroup)?.removeView(webViewContainer)
-                    splitContainer.addView(webViewContainer)
-                }
-                val lp = webViewContainer.layoutParams
-                if (lp is LinearLayout.LayoutParams) {
-                    lp.width = 0
-                    lp.weight = 1f
-                    webViewContainer.layoutParams = lp
-                }
-            }
-            SplitScreenMode.MAP_LEFT_BROWSER_RIGHT -> {
-                mapContainer.visibility = View.VISIBLE
-                btnSwap.visibility = View.VISIBLE
-                setupMapWebViewIfNeeded()
-
-                (mapContainer.parent as? android.view.ViewGroup)?.removeView(mapContainer)
-                (webViewContainer.parent as? android.view.ViewGroup)?.removeView(webViewContainer)
-                splitContainer.removeAllViews()
-
-                val mapLp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
-                val webLp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 2f)
-                splitContainer.addView(mapContainer, mapLp)
-                splitContainer.addView(webViewContainer, webLp)
-            }
-            SplitScreenMode.BROWSER_LEFT_MAP_RIGHT -> {
-                mapContainer.visibility = View.VISIBLE
-                btnSwap.visibility = View.VISIBLE
-                setupMapWebViewIfNeeded()
-
-                (mapContainer.parent as? android.view.ViewGroup)?.removeView(mapContainer)
-                (webViewContainer.parent as? android.view.ViewGroup)?.removeView(webViewContainer)
-                splitContainer.removeAllViews()
-
-                val webLp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 2f)
-                val mapLp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
-                splitContainer.addView(webViewContainer, webLp)
-                splitContainer.addView(mapContainer, mapLp)
-            }
-        }
-    }
-
-    private fun setupMapWebViewIfNeeded() {
-        if (!isMapLoaded) {
-            binding.mapWebView.apply {
-                settings.javaScriptEnabled = true
-                settings.domStorageEnabled = true
-                loadUrl("https://maps.google.com")
-            }
-            isMapLoaded = true
         }
     }
 
@@ -1037,7 +956,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateEvDashboardUi(data: EvTelemetryData) {
         val enabled = BrowserPreferences.isEvDashboardEnabled(this)
-        if (!enabled || !data.isConnectedToVehicle) {
+        if (!enabled) {
             binding.evDashboardWidget.visibility = View.GONE
             return
         }
@@ -1074,13 +993,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onMultiWindowModeChanged(isInMultiWindowMode: Boolean, newConfig: android.content.res.Configuration) {
         super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig)
-        applySplitScreenLayout()
         applyEvDashboardPosition()
     }
 
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
-        applySplitScreenLayout()
         applyEvDashboardPosition()
     }
 }

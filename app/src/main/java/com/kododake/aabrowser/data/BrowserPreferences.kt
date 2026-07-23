@@ -9,7 +9,6 @@ import com.kododake.aabrowser.model.AppThemeMode
 import com.kododake.aabrowser.model.InMotionVideoMode
 import com.kododake.aabrowser.model.QuickActionButtonMode
 import com.kododake.aabrowser.model.QuickActionButtonPosition
-import com.kododake.aabrowser.model.SplitScreenMode
 import com.kododake.aabrowser.model.UserAgentProfile
 import com.kododake.aabrowser.web.CryptoHelper
 import kotlin.math.roundToInt
@@ -766,18 +765,7 @@ object BrowserPreferences {
             .apply()
     }
 
-    fun getSplitScreenMode(context: Context): SplitScreenMode {
-        val key = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getString(KEY_SPLIT_SCREEN_MODE, SplitScreenMode.DISABLED.storageKey)
-        return SplitScreenMode.fromKey(key)
-    }
 
-    fun setSplitScreenMode(context: Context, mode: SplitScreenMode) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putString(KEY_SPLIT_SCREEN_MODE, mode.storageKey)
-            .apply()
-    }
 
     fun isAutoDesktopStreamingEnabled(context: Context): Boolean {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

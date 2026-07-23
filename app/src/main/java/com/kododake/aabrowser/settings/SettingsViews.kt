@@ -39,7 +39,6 @@ import com.kododake.aabrowser.model.AppThemeMode
 import com.kododake.aabrowser.model.InMotionVideoMode
 import com.kododake.aabrowser.model.QuickActionButtonMode
 import com.kododake.aabrowser.model.QuickActionButtonPosition
-import com.kododake.aabrowser.model.SplitScreenMode
 import com.kododake.aabrowser.model.UserAgentProfile
 
 data class SettingsCallbacks(
@@ -53,7 +52,6 @@ data class SettingsCallbacks(
     val onClearStartPageBackground: (() -> Unit)? = null,
     val onSponsorsVisibilityChanged: () -> Unit = {},
     val onVideoInMotionChanged: () -> Unit = {},
-    val onSplitScreenChanged: () -> Unit = {},
     val onClearSslExceptions: () -> Unit = {}
 )
 
@@ -690,60 +688,7 @@ object SettingsViews {
         videoInMotionCard.addView(videoInMotionInner)
         container.addView(videoInMotionCard)
 
-        // Card: Split Screen (Map + YouTube)
-        val splitScreenCard = createStyledCard()
-        val splitScreenInner = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(8), dp(16), dp(8), dp(16))
-        }
-        splitScreenInner.addView(
-            createSectionTitle(
-                context.getString(R.string.settings_split_screen_title),
-                R.drawable.devices_other_24px,
-                bottomPaddingDp = 8
-            )
-        )
 
-        val currentSplitMode = BrowserPreferences.getSplitScreenMode(context)
-        val splitModeStatusText = when (currentSplitMode) {
-            SplitScreenMode.DISABLED -> context.getString(R.string.settings_split_screen_disabled)
-            SplitScreenMode.MAP_LEFT_BROWSER_RIGHT -> context.getString(R.string.settings_split_screen_map_left)
-            SplitScreenMode.BROWSER_LEFT_MAP_RIGHT -> context.getString(R.string.settings_split_screen_browser_left)
-        }
-        val splitScreenRow = createSettingRow(
-            title = context.getString(R.string.settings_split_screen_title),
-            statusText = splitModeStatusText,
-            iconRes = R.drawable.devices_other_24px
-        ) {
-            val options = arrayOf(
-                context.getString(R.string.settings_split_screen_disabled),
-                context.getString(R.string.settings_split_screen_map_left),
-                context.getString(R.string.settings_split_screen_browser_left)
-            )
-            val selectedIndex = when (currentSplitMode) {
-                SplitScreenMode.DISABLED -> 0
-                SplitScreenMode.MAP_LEFT_BROWSER_RIGHT -> 1
-                SplitScreenMode.BROWSER_LEFT_MAP_RIGHT -> 2
-            }
-            MaterialAlertDialogBuilder(context, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
-                .setTitle(R.string.settings_split_screen_title)
-                .setSingleChoiceItems(options, selectedIndex) { dialog, which ->
-                    dialog.dismiss()
-                    val newMode = when (which) {
-                        1 -> SplitScreenMode.MAP_LEFT_BROWSER_RIGHT
-                        2 -> SplitScreenMode.BROWSER_LEFT_MAP_RIGHT
-                        else -> SplitScreenMode.DISABLED
-                    }
-                    if (newMode != currentSplitMode) {
-                        BrowserPreferences.setSplitScreenMode(context, newMode)
-                        callbacks.onSplitScreenChanged()
-                    }
-                }
-                .show()
-        }
-        splitScreenInner.addView(splitScreenRow)
-        splitScreenCard.addView(splitScreenInner)
-        container.addView(splitScreenCard)
 
         // Card: Streaming & SSL Compatibility
         val streamingCard = createStyledCard()
@@ -948,6 +893,21 @@ object SettingsViews {
                 .show()
         }
         evInner.addView(vehicleTypeRow)
+
+        val evLogsRow = createSettingRow(
+            title = "Logs de Diagnóstico da Telemetria",
+            statusText = "Ver histórico de GPS e eventos do veículo",
+            iconRes = R.drawable.devices_other_24px
+        ) {
+            val activity = context as? com.kododake.aabrowser.MainActivity
+            val logs = activity?.evTelemetryManager?.getDiagnosticLogs() ?: "Telemetria inativa ou indisponível."
+            MaterialAlertDialogBuilder(context, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
+                .setTitle("Logs de Diagnóstico de Telemetria")
+                .setMessage(logs)
+                .setPositiveButton("Fechar", null)
+                .show()
+        }
+        evInner.addView(evLogsRow)
         evCard.addView(evInner)
         container.addView(evCard)
 

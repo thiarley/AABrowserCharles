@@ -70,6 +70,9 @@ fun configureWebView(
 
             setSupportMultipleWindows(true)
 
+            setGeolocationEnabled(true)
+            setGeolocationDatabasePath(context.filesDir.path)
+
             setSupportZoom(true)
             builtInZoomControls = true
             displayZoomControls = false

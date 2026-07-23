@@ -40,6 +40,18 @@ class PermissionManager(private val activity: AppCompatActivity) {
         ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), requestCode)
     }
 
+    fun ensureLocationPermissionIfNeeded(requestCode: Int) {
+        val hasFine = ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val hasCoarse = ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (!hasFine && !hasCoarse) {
+            ActivityCompat.requestPermissions(
+                activity,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                requestCode
+            )
+        }
+    }
+
     private fun grantableWebPermissionResources(request: PermissionRequest): Array<String> {
         val allowed = setOf(
             PermissionRequest.RESOURCE_PROTECTED_MEDIA_ID,
@@ -166,7 +178,7 @@ class PermissionManager(private val activity: AppCompatActivity) {
         val hasFine = ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
         val hasCoarse = ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
-        if (BrowserPreferences.isHostAllowedLocation(activity, host) && hasFine) {
+        if (hasFine || hasCoarse) {
             callback.invoke(origin, true, true)
             return
         }

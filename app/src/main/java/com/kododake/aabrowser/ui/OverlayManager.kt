@@ -36,7 +36,6 @@ class OverlayManager(
         fun onPickBackgroundRequested()
         fun onVersionInfoReceived(latestUrl: String, tagName: String)
         fun onVideoInMotionChanged()
-        fun onSplitScreenChanged()
         fun onClearSslExceptions()
     }
 
@@ -150,9 +149,6 @@ class OverlayManager(
                 },
                 onVideoInMotionChanged = {
                     callbacks.onVideoInMotionChanged()
-                },
-                onSplitScreenChanged = {
-                    callbacks.onSplitScreenChanged()
                 },
                 onClearSslExceptions = {
                     com.kododake.aabrowser.web.SslErrorHandlerHelper.clearAllowedSslHosts(activity)

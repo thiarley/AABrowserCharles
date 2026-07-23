@@ -72,17 +72,42 @@ class EvTelemetryManager(
         }
     }
 
+    private val logEntries = java.util.Collections.synchronizedList(mutableListOf<String>())
+
+    private fun addLog(msg: String) {
+        val timestamp = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date())
+        val entry = "[$timestamp] $msg"
+        logEntries.add(entry)
+        if (logEntries.size > 50) logEntries.removeAt(0)
+    }
+
+    fun getDiagnosticLogs(): String {
+        if (logEntries.isEmpty()) return "Nenhum evento registrado ainda.\nGaranta que a localização/GPS esteja ativada no celular/multimídia."
+        return logEntries.joinToString("\n")
+    }
+
     @SuppressLint("MissingPermission")
     fun start() {
         if (isRunning) return
         isRunning = true
+        addLog("Iniciando telemetria...")
+        val gpsEnabled = locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) ?: false
+        val netEnabled = locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) ?: false
+        addLog("GPS Provider ativo: $gpsEnabled, Network Provider ativo: $netEnabled")
+
+        currentData = currentData.copy(isConnectedToVehicle = true)
+
         runCatching {
-            locationManager?.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
-                1000L,
-                1f,
-                this
-            )
+            if (gpsEnabled) {
+                locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 1f, this)
+                addLog("Registrado listener de localização em GPS_PROVIDER")
+            }
+            if (netEnabled) {
+                locationManager?.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000L, 1f, this)
+                addLog("Registrado listener de localização em NETWORK_PROVIDER")
+            }
+        }.onFailure { e ->
+            addLog("Erro ao registrar localização: ${e.message}")
         }
         handler.post(updateRunnable)
     }
@@ -90,6 +115,7 @@ class EvTelemetryManager(
     fun stop() {
         if (!isRunning) return
         isRunning = false
+        addLog("Parando telemetria.")
         runCatching {
             locationManager?.removeUpdates(this)
         }
@@ -102,6 +128,7 @@ class EvTelemetryManager(
         } else {
             0f
         }
+        addLog("Localização recebida: lat=${location.latitude}, speed=${speedKmH.toInt()}km/h, accuracy=${location.accuracy}m, prov=${location.provider}")
         currentData = currentData.copy(
             speedKmH = speedKmH,
             isConnectedToVehicle = true
@@ -110,6 +137,11 @@ class EvTelemetryManager(
         onTelemetryUpdated(currentData)
     }
 
-    override fun onProviderEnabled(provider: String) {}
-    override fun onProviderDisabled(provider: String) {}
+    override fun onProviderEnabled(provider: String) {
+        addLog("Provedor de localização ATIVADO: $provider")
+    }
+
+    override fun onProviderDisabled(provider: String) {
+        addLog("Provedor de localização DESATIVADO: $provider")
+    }
 }
