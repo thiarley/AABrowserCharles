@@ -36,6 +36,7 @@ class EvTelemetryManager(
     private val handler = Handler(Looper.getMainLooper())
     private var isRunning = false
     private var currentData = EvTelemetryData()
+    private var hasRealCarData = false
 
     private val updateRunnable = object : Runnable {
         override fun run() {
@@ -52,23 +53,24 @@ class EvTelemetryManager(
         val selectedType = when (prefType) {
             "combustion" -> VehicleEngineType.COMBUSTION
             "ev" -> VehicleEngineType.EV
-            else -> VehicleEngineType.EV // Default auto detection
+            else -> VehicleEngineType.EV
         }
 
-        currentData = if (selectedType == VehicleEngineType.COMBUSTION) {
-            currentData.copy(
-                engineType = VehicleEngineType.COMBUSTION,
-                fuelOrBatteryPercent = 85,
-                rangeKm = 540,
-                powerOrConsumption = 12.8f
-            )
-        } else {
-            currentData.copy(
-                engineType = VehicleEngineType.EV,
-                fuelOrBatteryPercent = 78,
-                rangeKm = 320,
-                powerOrConsumption = if (currentData.speedKmH > 5f) (currentData.speedKmH * 0.25f) else 0f
-            )
+        // If we haven't received real car CAN data yet, fallback to calculated/preference state
+        if (!hasRealCarData) {
+            currentData = if (selectedType == VehicleEngineType.COMBUSTION) {
+                currentData.copy(
+                    engineType = VehicleEngineType.COMBUSTION,
+                    fuelOrBatteryPercent = currentData.fuelOrBatteryPercent.takeIf { it != 78 } ?: 85,
+                    rangeKm = currentData.rangeKm.takeIf { it != 320 } ?: 540,
+                    powerOrConsumption = 12.8f
+                )
+            } else {
+                currentData.copy(
+                    engineType = VehicleEngineType.EV,
+                    powerOrConsumption = if (currentData.speedKmH > 5f) (currentData.speedKmH * 0.25f) else 0f
+                )
+            }
         }
     }
 
@@ -97,6 +99,8 @@ class EvTelemetryManager(
 
         currentData = currentData.copy(isConnectedToVehicle = true)
 
+        tryInitCarHardware()
+
         runCatching {
             if (gpsEnabled) {
                 locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 1f, this)
@@ -110,6 +114,22 @@ class EvTelemetryManager(
             addLog("Erro ao registrar localização: ${e.message}")
         }
         handler.post(updateRunnable)
+    }
+
+    private fun tryInitCarHardware() {
+        runCatching {
+            val carClass = Class.forName("android.car.Car")
+            val createCarMethod = carClass.getMethod("createCar", Context::class.java)
+            val carObj = createCarMethod.invoke(null, context)
+            val getCarManagerMethod = carClass.getMethod("getCarManager", String::class.java)
+            val carPropertyManager = getCarManagerMethod.invoke(carObj, "property")
+            if (carPropertyManager != null) {
+                addLog("CarPropertyManager inicializado com sucesso no sistema nativo do veículo.")
+                hasRealCarData = true
+            }
+        }.onFailure {
+            addLog("CarPropertyManager nativo não disponível neste dispositivo/host. Usando provedor GPS + Telemetria de localização.")
+        }
     }
 
     fun stop() {
@@ -145,3 +165,4 @@ class EvTelemetryManager(
         addLog("Provedor de localização DESATIVADO: $provider")
     }
 }
+
