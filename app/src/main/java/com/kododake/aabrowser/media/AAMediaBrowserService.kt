@@ -33,15 +33,15 @@ class AAMediaBrowserService : MediaBrowserServiceCompat() {
             )
             setCallback(object : MediaSessionCompat.Callback() {
                 override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
-                    openMainActivityWithUrl(mediaId)
+                    openMediaItem(mediaId)
                 }
 
                 override fun onPlay() {
-                    openMainActivityWithUrl(null)
+                    openMediaItem(null)
                 }
 
                 override fun onCustomAction(action: String?, extras: Bundle?) {
-                    openMainActivityWithUrl(null)
+                    openMediaItem(null)
                 }
             })
             val state = PlaybackStateCompat.Builder()
@@ -60,14 +60,31 @@ class AAMediaBrowserService : MediaBrowserServiceCompat() {
         sessionToken = mediaSession?.sessionToken
     }
 
-    private fun openMainActivityWithUrl(url: String?) {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            if (!url.isNullOrBlank() && (url.startsWith("http://") || url.startsWith("https://"))) {
-                data = Uri.parse(url)
+    private fun openMediaItem(mediaId: String?) {
+        when (mediaId) {
+            "action:settings" -> {
+                val intent = Intent(this, com.kododake.aabrowser.settings.SettingsActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                startActivity(intent)
+            }
+            "action:telemetry" -> {
+                BrowserPreferences.setEvDashboardEnabled(this, true)
+                val intent = Intent(this, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                }
+                startActivity(intent)
+            }
+            else -> {
+                val intent = Intent(this, MainActivity::class.java).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    if (!mediaId.isNullOrBlank() && (mediaId.startsWith("http://") || mediaId.startsWith("https://"))) {
+                        data = Uri.parse(mediaId)
+                    }
+                }
+                startActivity(intent)
             }
         }
-        startActivity(intent)
     }
 
     override fun onGetRoot(
@@ -87,18 +104,34 @@ class AAMediaBrowserService : MediaBrowserServiceCompat() {
         // 1. Root / Open Browser Item
         val mainDesc = MediaDescriptionCompat.Builder()
             .setMediaId("https://www.google.com")
-            .setTitle("Abrir Navegador Web")
-            .setSubtitle("Google")
+            .setTitle("🌐 Abrir Navegador Web")
+            .setSubtitle("Interface Principal")
             .build()
         items.add(MediaBrowserCompat.MediaItem(mainDesc, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE))
 
-        // 2. Bookmarks / Saved Sites
+        // 2. Settings Menu Item
+        val settingsDesc = MediaDescriptionCompat.Builder()
+            .setMediaId("action:settings")
+            .setTitle("⚙️ Configurações do App")
+            .setSubtitle("Ajustes, Temas e Opções")
+            .build()
+        items.add(MediaBrowserCompat.MediaItem(settingsDesc, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE))
+
+        // 3. Telemetry Item
+        val telemetryDesc = MediaDescriptionCompat.Builder()
+            .setMediaId("action:telemetry")
+            .setTitle("⚡ Painel de Telemetria")
+            .setSubtitle("Dados de Velocidade e Bateria")
+            .build()
+        items.add(MediaBrowserCompat.MediaItem(telemetryDesc, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE))
+
+        // 4. Bookmarks / Saved Sites
         val bookmarks = BrowserPreferences.getBookmarks(applicationContext)
         for (url in bookmarks) {
             val title = getTitleForUrl(url)
             val desc = MediaDescriptionCompat.Builder()
                 .setMediaId(url)
-                .setTitle(title)
+                .setTitle("⭐ $title")
                 .setSubtitle(url)
                 .build()
             items.add(MediaBrowserCompat.MediaItem(desc, MediaBrowserCompat.MediaItem.FLAG_PLAYABLE))
