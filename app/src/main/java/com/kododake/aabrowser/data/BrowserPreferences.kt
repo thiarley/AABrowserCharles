@@ -6,9 +6,12 @@ import android.net.Uri
 import android.util.DisplayMetrics
 import android.util.Patterns
 import com.kododake.aabrowser.model.AppThemeMode
+import com.kododake.aabrowser.model.InMotionVideoMode
 import com.kododake.aabrowser.model.QuickActionButtonMode
 import com.kododake.aabrowser.model.QuickActionButtonPosition
+import com.kododake.aabrowser.model.SplitScreenMode
 import com.kododake.aabrowser.model.UserAgentProfile
+import com.kododake.aabrowser.web.CryptoHelper
 import kotlin.math.roundToInt
 import org.json.JSONArray
 import org.json.JSONObject
@@ -48,6 +51,16 @@ object BrowserPreferences {
     private const val KEY_HOME_PAGE_URL = "home_page_url"
     private const val KEY_ALLOWED_LOCATION_HOSTS = "allowed_location_hosts"
     private const val KEY_HIDE_SPONSORS = "hide_sponsors"
+    private const val KEY_IN_MOTION_VIDEO_MODE = "in_motion_video_mode"
+    private const val KEY_SPLIT_SCREEN_MODE = "split_screen_mode"
+    private const val KEY_AUTO_DESKTOP_STREAMING = "auto_desktop_streaming"
+    private const val KEY_PERSISTENT_SSL_HOSTS = "persistent_ssl_hosts"
+    private const val KEY_APP_LOCK_ENABLED = "app_lock_enabled"
+    private const val KEY_APP_LOCK_PIN_HASH = "app_lock_pin_hash"
+    private const val KEY_USE_BIOMETRIC_LOCK = "use_biometric_lock"
+    private const val KEY_EV_DASHBOARD_ENABLED = "ev_dashboard_enabled"
+    private const val KEY_EV_DASHBOARD_POSITION = "ev_dashboard_position"
+    private const val KEY_VEHICLE_TYPE = "vehicle_type"
     private const val DEFAULT_URL = "https://www.google.com"
     private const val SEARCH_TEMPLATE = "https://www.google.com/search?q=%s"
 
@@ -670,6 +683,144 @@ object BrowserPreferences {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putBoolean(KEY_HIDE_SPONSORS, hide)
+            .apply()
+    }
+
+    fun getInMotionVideoMode(context: Context): InMotionVideoMode {
+        val key = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_IN_MOTION_VIDEO_MODE, InMotionVideoMode.CONTINUE.storageKey)
+        return InMotionVideoMode.fromKey(key)
+    }
+
+    fun setInMotionVideoMode(context: Context, mode: InMotionVideoMode) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_IN_MOTION_VIDEO_MODE, mode.storageKey)
+            .apply()
+    }
+
+    fun getSplitScreenMode(context: Context): SplitScreenMode {
+        val key = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_SPLIT_SCREEN_MODE, SplitScreenMode.DISABLED.storageKey)
+        return SplitScreenMode.fromKey(key)
+    }
+
+    fun setSplitScreenMode(context: Context, mode: SplitScreenMode) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_SPLIT_SCREEN_MODE, mode.storageKey)
+            .apply()
+    }
+
+    fun isAutoDesktopStreamingEnabled(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_AUTO_DESKTOP_STREAMING, true)
+    }
+
+    fun setAutoDesktopStreamingEnabled(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_AUTO_DESKTOP_STREAMING, enabled)
+            .apply()
+    }
+
+    fun getPersistentSslHosts(context: Context): Set<String> {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getStringSet(KEY_PERSISTENT_SSL_HOSTS, emptySet()) ?: emptySet()
+    }
+
+    fun addPersistentSslHost(context: Context, host: String) {
+        val current = getPersistentSslHosts(context).toMutableSet()
+        current.add(host.lowercase())
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putStringSet(KEY_PERSISTENT_SSL_HOSTS, current)
+            .apply()
+    }
+
+    fun clearPersistentSslHosts(context: Context) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .remove(KEY_PERSISTENT_SSL_HOSTS)
+            .apply()
+    }
+
+    fun isAppLockEnabled(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_APP_LOCK_ENABLED, false) && !getAppLockPinHash(context).isNullOrBlank()
+    }
+
+    fun setAppLockEnabled(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_APP_LOCK_ENABLED, enabled)
+            .apply()
+    }
+
+    fun getAppLockPinHash(context: Context): String? {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_APP_LOCK_PIN_HASH, null)
+    }
+
+    fun setAppLockPin(context: Context, pin: String) {
+        val hash = CryptoHelper.hashPin(pin)
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_APP_LOCK_PIN_HASH, hash)
+            .putBoolean(KEY_APP_LOCK_ENABLED, true)
+            .apply()
+    }
+
+    fun verifyPin(context: Context, pin: String): Boolean {
+        val storedHash = getAppLockPinHash(context) ?: return false
+        return storedHash == CryptoHelper.hashPin(pin)
+    }
+
+    fun isBiometricLockEnabled(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_USE_BIOMETRIC_LOCK, false)
+    }
+
+    fun setBiometricLockEnabled(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_USE_BIOMETRIC_LOCK, enabled)
+            .apply()
+    }
+
+    fun isEvDashboardEnabled(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_EV_DASHBOARD_ENABLED, false)
+    }
+
+    fun setEvDashboardEnabled(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_EV_DASHBOARD_ENABLED, enabled)
+            .apply()
+    }
+
+    fun getEvDashboardPosition(context: Context): String {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_EV_DASHBOARD_POSITION, "top_right") ?: "top_right"
+    }
+
+    fun setEvDashboardPosition(context: Context, position: String) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_EV_DASHBOARD_POSITION, position)
+            .apply()
+    }
+
+    fun getVehicleType(context: Context): String {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_VEHICLE_TYPE, "auto") ?: "auto"
+    }
+
+    fun setVehicleType(context: Context, type: String) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_VEHICLE_TYPE, type)
             .apply()
     }
 

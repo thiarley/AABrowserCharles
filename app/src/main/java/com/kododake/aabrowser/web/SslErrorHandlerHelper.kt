@@ -1,21 +1,30 @@
 package com.kododake.aabrowser.web
 
 import android.app.Activity
+import android.content.Context
 import android.net.Uri
 import android.net.http.SslError
 import android.webkit.SslErrorHandler
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kododake.aabrowser.R
+import com.kododake.aabrowser.data.BrowserPreferences
 
 object SslErrorHandlerHelper {
 
     private val allowedSslHosts = HashSet<String>()
 
+    // Mapeamento de famílias de domínios conhecidas de streaming para propagação automática de SSL
+    private val STREAMING_DOMAINS_MAP = mapOf(
+        "netflix.com" to listOf("nflxext.com", "nflxso.net", "nflxvideo.net", "nflximg.net", "netflix.net"),
+        "disneyplus.com" to listOf("disney-plus.net", "disney.com", "dssott.com", "bamgrid.com"),
+        "primevideo.com" to listOf("amazon.com", "pv-cdn.net", "media-amazon.com", "aiv-cdn.net")
+    )
+
     fun handleSslError(activity: Activity, handler: SslErrorHandler, error: SslError) {
         val url = error.url ?: ""
         val host = runCatching { Uri.parse(url).host?.lowercase() }.getOrNull()
 
-        if (host != null && allowedSslHosts.contains(host)) {
+        if (host != null && isHostAllowed(activity, host)) {
             handler.proceed()
             return
         }
@@ -58,6 +67,7 @@ object SslErrorHandlerHelper {
         cancelButton.text = activity.getString(R.string.ssl_error_cancel)
         allowOnceButton.text = activity.getString(R.string.ssl_error_proceed)
         allowHostButton.visibility = android.view.View.GONE
+
         cancelButton.setOnClickListener {
             try { dialog.dismiss() } catch (_: Exception) {}
             handler.cancel()
@@ -67,6 +77,7 @@ object SslErrorHandlerHelper {
             try { dialog.dismiss() } catch (_: Exception) {}
             if (host != null) {
                 allowedSslHosts.add(host)
+                BrowserPreferences.addPersistentSslHost(activity, host)
             }
             handler.proceed()
         }
@@ -80,6 +91,27 @@ object SslErrorHandlerHelper {
         }
     }
 
+    private fun isHostAllowed(context: Context, host: String): Boolean {
+        val persistent = BrowserPreferences.getPersistentSslHosts(context)
+        val allAllowed = allowedSslHosts + persistent
+
+        for (allowed in allAllowed) {
+            if (host == allowed || host.endsWith(".$allowed")) {
+                return true
+            }
+            // Verificar família de streaming
+            for ((mainDomain, cdnDomains) in STREAMING_DOMAINS_MAP) {
+                val family = listOf(mainDomain) + cdnDomains
+                val allowedInFamily = family.any { allowed == it || allowed.endsWith(".$it") }
+                val targetInFamily = family.any { host == it || host.endsWith(".$it") }
+                if (allowedInFamily && targetInFamily) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
     private fun getSslErrorDescription(activity: Activity, errorCode: Int): String {
         return when (errorCode) {
             SslError.SSL_EXPIRED -> activity.getString(R.string.ssl_error_expired)
@@ -91,7 +123,8 @@ object SslErrorHandlerHelper {
         }
     }
 
-    fun clearAllowedSslHosts() {
+    fun clearAllowedSslHosts(context: Context) {
         allowedSslHosts.clear()
+        BrowserPreferences.clearPersistentSslHosts(context)
     }
 }

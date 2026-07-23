@@ -36,8 +36,10 @@ import com.google.zxing.qrcode.QRCodeWriter
 import com.kododake.aabrowser.R
 import com.kododake.aabrowser.data.BrowserPreferences
 import com.kododake.aabrowser.model.AppThemeMode
+import com.kododake.aabrowser.model.InMotionVideoMode
 import com.kododake.aabrowser.model.QuickActionButtonMode
 import com.kododake.aabrowser.model.QuickActionButtonPosition
+import com.kododake.aabrowser.model.SplitScreenMode
 import com.kododake.aabrowser.model.UserAgentProfile
 
 data class SettingsCallbacks(
@@ -49,7 +51,10 @@ data class SettingsCallbacks(
     val onInAppControlsChanged: () -> Unit = {},
     val onPickStartPageBackground: (() -> Unit)? = null,
     val onClearStartPageBackground: (() -> Unit)? = null,
-    val onSponsorsVisibilityChanged: () -> Unit = {}
+    val onSponsorsVisibilityChanged: () -> Unit = {},
+    val onVideoInMotionChanged: () -> Unit = {},
+    val onSplitScreenChanged: () -> Unit = {},
+    val onClearSslExceptions: () -> Unit = {}
 )
 
 object SettingsViews {
@@ -626,6 +631,326 @@ object SettingsViews {
         startupCard.addView(startupInner)
         container.addView(startupCard)
 
+        // Card: Video in Motion
+        val videoInMotionCard = createStyledCard()
+        val videoInMotionInner = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(8), dp(16), dp(8), dp(16))
+        }
+        videoInMotionInner.addView(
+            createSectionTitle(
+                context.getString(R.string.settings_video_in_motion_title),
+                R.drawable.new_window_24px,
+                bottomPaddingDp = 8
+            )
+        )
+
+        val currentVideoMode = BrowserPreferences.getInMotionVideoMode(context)
+        val videoModeStatusText = when (currentVideoMode) {
+            InMotionVideoMode.CONTINUE -> context.getString(R.string.settings_video_in_motion_continue)
+            InMotionVideoMode.PAUSE -> context.getString(R.string.settings_video_in_motion_pause)
+            InMotionVideoMode.FLOATING_PIP -> context.getString(R.string.settings_video_in_motion_floating_pip)
+            InMotionVideoMode.AUDIO_ONLY -> context.getString(R.string.settings_video_in_motion_audio_only)
+        }
+        val videoInMotionRow = createSettingRow(
+            title = context.getString(R.string.settings_video_in_motion_title),
+            statusText = videoModeStatusText,
+            iconRes = R.drawable.new_window_24px
+        ) {
+            val options = arrayOf(
+                context.getString(R.string.settings_video_in_motion_continue),
+                context.getString(R.string.settings_video_in_motion_pause),
+                context.getString(R.string.settings_video_in_motion_floating_pip),
+                context.getString(R.string.settings_video_in_motion_audio_only)
+            )
+            val selectedIndex = when (currentVideoMode) {
+                InMotionVideoMode.CONTINUE -> 0
+                InMotionVideoMode.PAUSE -> 1
+                InMotionVideoMode.FLOATING_PIP -> 2
+                InMotionVideoMode.AUDIO_ONLY -> 3
+            }
+            MaterialAlertDialogBuilder(context, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
+                .setTitle(R.string.settings_video_in_motion_title)
+                .setSingleChoiceItems(options, selectedIndex) { dialog, which ->
+                    dialog.dismiss()
+                    val newMode = when (which) {
+                        1 -> InMotionVideoMode.PAUSE
+                        2 -> InMotionVideoMode.FLOATING_PIP
+                        3 -> InMotionVideoMode.AUDIO_ONLY
+                        else -> InMotionVideoMode.CONTINUE
+                    }
+                    if (newMode != currentVideoMode) {
+                        BrowserPreferences.setInMotionVideoMode(context, newMode)
+                        callbacks.onVideoInMotionChanged()
+                    }
+                }
+                .show()
+        }
+        videoInMotionInner.addView(videoInMotionRow)
+        videoInMotionCard.addView(videoInMotionInner)
+        container.addView(videoInMotionCard)
+
+        // Card: Split Screen (Map + YouTube)
+        val splitScreenCard = createStyledCard()
+        val splitScreenInner = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(8), dp(16), dp(8), dp(16))
+        }
+        splitScreenInner.addView(
+            createSectionTitle(
+                context.getString(R.string.settings_split_screen_title),
+                R.drawable.devices_other_24px,
+                bottomPaddingDp = 8
+            )
+        )
+
+        val currentSplitMode = BrowserPreferences.getSplitScreenMode(context)
+        val splitModeStatusText = when (currentSplitMode) {
+            SplitScreenMode.DISABLED -> context.getString(R.string.settings_split_screen_disabled)
+            SplitScreenMode.MAP_LEFT_BROWSER_RIGHT -> context.getString(R.string.settings_split_screen_map_left)
+            SplitScreenMode.BROWSER_LEFT_MAP_RIGHT -> context.getString(R.string.settings_split_screen_browser_left)
+        }
+        val splitScreenRow = createSettingRow(
+            title = context.getString(R.string.settings_split_screen_title),
+            statusText = splitModeStatusText,
+            iconRes = R.drawable.devices_other_24px
+        ) {
+            val options = arrayOf(
+                context.getString(R.string.settings_split_screen_disabled),
+                context.getString(R.string.settings_split_screen_map_left),
+                context.getString(R.string.settings_split_screen_browser_left)
+            )
+            val selectedIndex = when (currentSplitMode) {
+                SplitScreenMode.DISABLED -> 0
+                SplitScreenMode.MAP_LEFT_BROWSER_RIGHT -> 1
+                SplitScreenMode.BROWSER_LEFT_MAP_RIGHT -> 2
+            }
+            MaterialAlertDialogBuilder(context, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
+                .setTitle(R.string.settings_split_screen_title)
+                .setSingleChoiceItems(options, selectedIndex) { dialog, which ->
+                    dialog.dismiss()
+                    val newMode = when (which) {
+                        1 -> SplitScreenMode.MAP_LEFT_BROWSER_RIGHT
+                        2 -> SplitScreenMode.BROWSER_LEFT_MAP_RIGHT
+                        else -> SplitScreenMode.DISABLED
+                    }
+                    if (newMode != currentSplitMode) {
+                        BrowserPreferences.setSplitScreenMode(context, newMode)
+                        callbacks.onSplitScreenChanged()
+                    }
+                }
+                .show()
+        }
+        splitScreenInner.addView(splitScreenRow)
+        splitScreenCard.addView(splitScreenInner)
+        container.addView(splitScreenCard)
+
+        // Card: Streaming & SSL Compatibility
+        val streamingCard = createStyledCard()
+        val streamingInner = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(8), dp(16), dp(8), dp(16))
+        }
+        streamingInner.addView(
+            createSectionTitle(
+                context.getString(R.string.settings_streaming_title),
+                R.drawable.new_window_24px,
+                bottomPaddingDp = 8
+            )
+        )
+
+        val autoDesktopStreamingRow = createSettingSwitchRow(
+            title = context.getString(R.string.settings_auto_desktop_streaming),
+            description = context.getString(R.string.settings_auto_desktop_streaming_description),
+            iconRes = R.drawable.computer_24,
+            isCheckedValue = BrowserPreferences.isAutoDesktopStreamingEnabled(context)
+        ) { isChecked ->
+            BrowserPreferences.setAutoDesktopStreamingEnabled(context, isChecked)
+        }
+        streamingInner.addView(autoDesktopStreamingRow)
+
+        val clearSslRow = createSettingRow(
+            title = context.getString(R.string.settings_clear_ssl_exceptions),
+            statusText = context.getString(R.string.settings_clear_ssl_exceptions_description),
+            iconRes = R.drawable.settings_24px
+        ) {
+            callbacks.onClearSslExceptions()
+            Toast.makeText(context, R.string.ssl_exceptions_cleared, Toast.LENGTH_SHORT).show()
+        }
+        streamingInner.addView(clearSslRow)
+        streamingCard.addView(streamingInner)
+        container.addView(streamingCard)
+
+        // Card: Security & Privacy (App Lock)
+        val securityCard = createStyledCard()
+        val securityInner = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(8), dp(16), dp(8), dp(16))
+        }
+        securityInner.addView(
+            createSectionTitle(
+                context.getString(R.string.settings_security_title),
+                R.drawable.security_24px,
+                bottomPaddingDp = 8
+            )
+        )
+
+        val isPinEnabled = BrowserPreferences.isAppLockEnabled(context)
+        val pinStatusText = if (isPinEnabled) "Ativo" else "Desativado"
+        val appLockRow = createSettingRow(
+            title = context.getString(R.string.settings_app_lock),
+            statusText = pinStatusText,
+            iconRes = R.drawable.security_24px
+        ) {
+            val inputLayout = TextInputLayout(context).apply {
+                hint = context.getString(R.string.settings_app_lock_enter_pin)
+                setPadding(dp(24), dp(8), dp(24), dp(8))
+            }
+            val input = TextInputEditText(context).apply {
+                inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+                filters = arrayOf(android.text.InputFilter.LengthFilter(4))
+            }
+            inputLayout.addView(input)
+
+            if (!isPinEnabled) {
+                MaterialAlertDialogBuilder(context, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
+                    .setTitle(R.string.settings_app_lock_set_pin)
+                    .setMessage(R.string.settings_app_lock_description)
+                    .setView(inputLayout)
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
+                        val pin = input.text?.toString()?.trim().orEmpty()
+                        if (pin.length == 4 && pin.all { it.isDigit() }) {
+                            BrowserPreferences.setAppLockPin(context, pin)
+                            Toast.makeText(context, R.string.settings_app_lock_pin_saved, Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, R.string.settings_app_lock_invalid_pin, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .show()
+            } else {
+                val options = arrayOf("Alterar PIN", "Desativar Bloqueio")
+                MaterialAlertDialogBuilder(context, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
+                    .setTitle(R.string.settings_app_lock)
+                    .setItems(options) { _, which ->
+                        if (which == 0) {
+                            MaterialAlertDialogBuilder(context, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
+                                .setTitle(R.string.settings_app_lock_change_pin)
+                                .setView(inputLayout)
+                                .setNegativeButton(android.R.string.cancel, null)
+                                .setPositiveButton(android.R.string.ok) { _, _ ->
+                                    val pin = input.text?.toString()?.trim().orEmpty()
+                                    if (pin.length == 4 && pin.all { it.isDigit() }) {
+                                        BrowserPreferences.setAppLockPin(context, pin)
+                                        Toast.makeText(context, R.string.settings_app_lock_pin_saved, Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, R.string.settings_app_lock_invalid_pin, Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                                .show()
+                        } else {
+                            BrowserPreferences.setAppLockEnabled(context, false)
+                            Toast.makeText(context, "Bloqueio desativado", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .show()
+            }
+        }
+        securityInner.addView(appLockRow)
+        securityCard.addView(securityInner)
+        container.addView(securityCard)
+
+        // Card: EV Telemetry Dashboard
+        val evCard = createStyledCard()
+        val evInner = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(8), dp(16), dp(8), dp(16))
+        }
+        evInner.addView(
+            createSectionTitle(
+                context.getString(R.string.settings_ev_dashboard_title),
+                R.drawable.devices_other_24px,
+                bottomPaddingDp = 8
+            )
+        )
+
+        val evToggleRow = createSettingSwitchRow(
+            title = context.getString(R.string.settings_ev_dashboard_toggle),
+            description = context.getString(R.string.settings_ev_dashboard_description),
+            iconRes = R.drawable.devices_other_24px,
+            isCheckedValue = BrowserPreferences.isEvDashboardEnabled(context)
+        ) { isChecked ->
+            BrowserPreferences.setEvDashboardEnabled(context, isChecked)
+        }
+        evInner.addView(evToggleRow)
+
+        val currentEvPos = BrowserPreferences.getEvDashboardPosition(context)
+        val posText = when (currentEvPos) {
+            "top_left" -> context.getString(R.string.ev_dashboard_top_left)
+            "bottom_right" -> context.getString(R.string.ev_dashboard_bottom_right)
+            "bottom_left" -> context.getString(R.string.ev_dashboard_bottom_left)
+            else -> context.getString(R.string.ev_dashboard_top_right)
+        }
+        val evPosRow = createSettingRow(
+            title = context.getString(R.string.settings_ev_dashboard_position),
+            statusText = posText,
+            iconRes = R.drawable.devices_other_24px
+        ) {
+            val options = arrayOf(
+                context.getString(R.string.ev_dashboard_top_right),
+                context.getString(R.string.ev_dashboard_top_left),
+                context.getString(R.string.ev_dashboard_bottom_right),
+                context.getString(R.string.ev_dashboard_bottom_left)
+            )
+            MaterialAlertDialogBuilder(context, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
+                .setTitle(R.string.settings_ev_dashboard_position)
+                .setItems(options) { _, which ->
+                    val selectedKey = when (which) {
+                        1 -> "top_left"
+                        2 -> "bottom_right"
+                        3 -> "bottom_left"
+                        else -> "top_right"
+                    }
+                    BrowserPreferences.setEvDashboardPosition(context, selectedKey)
+                    Toast.makeText(context, "Posição atualizada", Toast.LENGTH_SHORT).show()
+                }
+                .show()
+        }
+        evInner.addView(evPosRow)
+
+        val currentEngineType = BrowserPreferences.getVehicleType(context)
+        val engineTypeText = when (currentEngineType) {
+            "combustion" -> context.getString(R.string.vehicle_type_combustion)
+            "ev" -> context.getString(R.string.vehicle_type_ev)
+            else -> context.getString(R.string.vehicle_type_auto)
+        }
+        val vehicleTypeRow = createSettingRow(
+            title = context.getString(R.string.settings_vehicle_type),
+            statusText = engineTypeText,
+            iconRes = R.drawable.devices_other_24px
+        ) {
+            val options = arrayOf(
+                context.getString(R.string.vehicle_type_auto),
+                context.getString(R.string.vehicle_type_ev),
+                context.getString(R.string.vehicle_type_combustion)
+            )
+            MaterialAlertDialogBuilder(context, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
+                .setTitle(R.string.settings_vehicle_type)
+                .setItems(options) { _, which ->
+                    val selectedType = when (which) {
+                        1 -> "ev"
+                        2 -> "combustion"
+                        else -> "auto"
+                    }
+                    BrowserPreferences.setVehicleType(context, selectedType)
+                    Toast.makeText(context, "Tipo de veículo atualizado", Toast.LENGTH_SHORT).show()
+                }
+                .show()
+        }
+        evInner.addView(vehicleTypeRow)
+        evCard.addView(evInner)
+        container.addView(evCard)
+
         val inAppControlsCard = createStyledCard()
         val inAppControlsInner = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -1085,7 +1410,7 @@ object SettingsViews {
                 BrowserPreferences.clearSavedSitePermissions(context)
                 android.webkit.GeolocationPermissions.getInstance().clearAll()
                 android.webkit.WebView.clearClientCertPreferences(null)
-                com.kododake.aabrowser.web.SslErrorHandlerHelper.clearAllowedSslHosts()
+                com.kododake.aabrowser.web.SslErrorHandlerHelper.clearAllowedSslHosts(context)
                 showSuccessDialog(
                     title = context.getString(R.string.settings_clear_site_permissions_success_title),
                     message = context.getString(R.string.settings_clear_site_permissions_success_message)

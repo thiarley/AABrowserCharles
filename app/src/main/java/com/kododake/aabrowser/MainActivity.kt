@@ -17,6 +17,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.graphics.ColorUtils
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.color.DynamicColors
@@ -28,14 +30,21 @@ import com.kododake.aabrowser.AppConstants.MENU_BUTTON_AUTO_HIDE_DELAY_MS
 import com.kododake.aabrowser.AppConstants.MENU_BUTTON_SHOW_DELAY_MS
 import com.kododake.aabrowser.AppConstants.REQUEST_CODE_POST_NOTIFICATIONS
 import com.kododake.aabrowser.AppConstants.REQUEST_CODE_RECORD_AUDIO
-import com.kododake.aabrowser.analytics.UmamiTracker
 import com.kododake.aabrowser.bookmarks.BookmarkManager
 import com.kododake.aabrowser.data.BrowserPreferences
 import com.kododake.aabrowser.data.SiteIconCache
 import com.kododake.aabrowser.databinding.ActivityMainBinding
+import android.widget.LinearLayout
+import com.kododake.aabrowser.media.AudioBackgroundService
+import com.kododake.aabrowser.model.InMotionVideoMode
 import com.kododake.aabrowser.model.QuickActionButtonMode
+import com.kododake.aabrowser.model.SplitScreenMode
 import com.kododake.aabrowser.model.UserAgentProfile
+import com.kododake.aabrowser.ev.EvTelemetryData
+import com.kododake.aabrowser.ev.EvTelemetryManager
+import com.kododake.aabrowser.motion.MotionDetector
 import com.kododake.aabrowser.navigation.NavigationManager
+import com.kododake.aabrowser.security.AppLockManager
 import com.kododake.aabrowser.permissions.PermissionManager
 import com.kododake.aabrowser.startpage.StartPageManager
 import com.kododake.aabrowser.tabs.BrowserTab
@@ -60,10 +69,6 @@ class MainActivity : AppCompatActivity() {
     private val handler: Handler = Handler(Looper.getMainLooper())
     
     // Feature Managers
-    private val umamiTracker: UmamiTracker by lazy { 
-        UmamiTracker(applicationContext) 
-    }
-    
     private val themeManager: ThemeManager by lazy { 
         ThemeManager(this, binding) 
     }
@@ -95,6 +100,25 @@ class MainActivity : AppCompatActivity() {
     private val overlayManager: OverlayManager by lazy { 
         OverlayManager(this, binding, tabManager, bookmarkManager, startPageManager, uiManager, createOverlayCallbacks()) 
     }
+
+    private val motionDetector: MotionDetector by lazy {
+        MotionDetector(this) { inMotion ->
+            onVehicleMotionStateChanged(inMotion)
+        }
+    }
+
+    private val appLockManager: AppLockManager by lazy {
+        AppLockManager(this)
+    }
+
+    private val evTelemetryManager: EvTelemetryManager by lazy {
+        EvTelemetryManager(this) { data ->
+            updateEvDashboardUi(data)
+        }
+    }
+
+    private var currentEnteredPin = ""
+    private var isMapLoaded = false
 
     private val isDebugBuild: Boolean by lazy { 
         val flags = applicationInfo.flags
@@ -176,8 +200,8 @@ class MainActivity : AppCompatActivity() {
         shouldForceSessionRestore = (savedInstanceState != null)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        setupWindowInsetsAndCoolwalk()
         
-        umamiTracker.trackEvent("app_open")
         binding.menuVersion.text = "v${BuildConfig.VERSION_NAME}"
         setupUi()
         setupBackPressHandling()
@@ -206,9 +230,15 @@ class MainActivity : AppCompatActivity() {
         syncUserAgentProfile()
         uiManager.applyPersistentAddressBarPreference()
         uiManager.applyQuickActionButtonPreferences()
+        applySplitScreenLayout()
+        motionDetector.start()
+        checkAppLock()
+        updateEvDashboardState()
     }
 
     override fun onPause() {
+        motionDetector.stop()
+        evTelemetryManager.stop()
         uiManager.exitFullscreen()
         webView?.onPause()
         super.onPause()
@@ -261,6 +291,18 @@ class MainActivity : AppCompatActivity() {
         uiManager.syncAddressFieldsFrom(binding.addressEdit)
         uiManager.updateAddressClearButtons()
         uiManager.setupManualDragLogic()
+
+        binding.btnSwapSplitScreen.setOnClickListener {
+            val current = BrowserPreferences.getSplitScreenMode(this)
+            val next = if (current == SplitScreenMode.MAP_LEFT_BROWSER_RIGHT) {
+                SplitScreenMode.BROWSER_LEFT_MAP_RIGHT
+            } else {
+                SplitScreenMode.MAP_LEFT_BROWSER_RIGHT
+            }
+            BrowserPreferences.setSplitScreenMode(this, next)
+            applySplitScreenLayout()
+        }
+        applySplitScreenLayout()
         
         val setup = MainActivitySetup(
             this,
@@ -283,6 +325,8 @@ class MainActivity : AppCompatActivity() {
         bookmarkManager.refreshBookmarks()
         refreshHomePageMode()
         uiManager.applyPersistentAddressBarPreference()
+        setupAppLockKeypad()
+        checkAppLock()
         uiManager.applyQuickActionButtonPreferences()
     }
 
@@ -753,5 +797,245 @@ class MainActivity : AppCompatActivity() {
         override fun onVersionInfoReceived(latestUrl: String, tagName: String) {
             latestReleaseUrl = latestUrl
         }
+
+        override fun onVideoInMotionChanged() {
+            onVehicleMotionStateChanged(motionDetector.isCurrentlyInMotion())
+        }
+
+        override fun onSplitScreenChanged() {
+            applySplitScreenLayout()
+        }
+
+        override fun onClearSslExceptions() {
+            com.kododake.aabrowser.web.SslErrorHandlerHelper.clearAllowedSslHosts(this@MainActivity)
+        }
+    }
+
+    private fun onVehicleMotionStateChanged(inMotion: Boolean) {
+        val mode = BrowserPreferences.getInMotionVideoMode(this)
+        if (!inMotion) {
+            AudioBackgroundService.stopAudioService(this)
+            restoreNormalVideoAndLayout()
+            return
+        }
+
+        when (mode) {
+            InMotionVideoMode.CONTINUE -> {
+                // Manter reprodução normal
+            }
+            InMotionVideoMode.PAUSE -> {
+                webView?.evaluateJavascript("document.querySelectorAll('video').forEach(v => v.pause());", null)
+            }
+            InMotionVideoMode.FLOATING_PIP -> {
+                applyFloatingPipLayout(true)
+            }
+            InMotionVideoMode.AUDIO_ONLY -> {
+                AudioBackgroundService.startAudioService(this)
+                binding.webViewContainer.visibility = View.INVISIBLE
+                moveTaskToBack(true)
+            }
+        }
+    }
+
+    private fun applySplitScreenLayout() {
+        val mode = BrowserPreferences.getSplitScreenMode(this)
+        val mapContainer = binding.mapContainer
+        val webViewContainer = binding.webViewContainer
+        val splitContainer = binding.splitScreenContainer
+        val btnSwap = binding.btnSwapSplitScreen
+
+        when (mode) {
+            SplitScreenMode.DISABLED -> {
+                mapContainer.visibility = View.GONE
+                btnSwap.visibility = View.GONE
+                val lp = webViewContainer.layoutParams as LinearLayout.LayoutParams
+                lp.width = LinearLayout.LayoutParams.MATCH_PARENT
+                lp.weight = 0f
+                webViewContainer.layoutParams = lp
+            }
+            SplitScreenMode.MAP_LEFT_BROWSER_RIGHT -> {
+                mapContainer.visibility = View.VISIBLE
+                btnSwap.visibility = View.VISIBLE
+                setupMapWebViewIfNeeded()
+
+                splitContainer.removeAllViews()
+                val mapLp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 2f)
+                val webLp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
+                splitContainer.addView(mapContainer, mapLp)
+                splitContainer.addView(webViewContainer, webLp)
+            }
+            SplitScreenMode.BROWSER_LEFT_MAP_RIGHT -> {
+                mapContainer.visibility = View.VISIBLE
+                btnSwap.visibility = View.VISIBLE
+                setupMapWebViewIfNeeded()
+
+                splitContainer.removeAllViews()
+                val webLp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 2f)
+                val mapLp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
+                splitContainer.addView(webViewContainer, webLp)
+                splitContainer.addView(mapContainer, mapLp)
+            }
+        }
+    }
+
+    private fun setupMapWebViewIfNeeded() {
+        if (!isMapLoaded) {
+            binding.mapWebView.apply {
+                settings.javaScriptEnabled = true
+                settings.domStorageEnabled = true
+                loadUrl("https://maps.google.com")
+            }
+            isMapLoaded = true
+        }
+    }
+
+    private fun restoreNormalVideoAndLayout() {
+        binding.webViewContainer.visibility = View.VISIBLE
+        applyFloatingPipLayout(false)
+    }
+
+    private fun applyFloatingPipLayout(enablePip: Boolean) {
+        val lp = binding.webViewContainer.layoutParams
+        if (enablePip) {
+            val density = resources.displayMetrics.density
+            lp.width = (320 * density).toInt()
+            lp.height = (200 * density).toInt()
+        } else {
+            lp.width = 0
+            lp.height = LinearLayout.LayoutParams.MATCH_PARENT
+        }
+        binding.webViewContainer.layoutParams = lp
+    }
+
+    private fun checkAppLock() {
+        if (appLockManager.isLocked()) {
+            setupAppLockKeypad()
+            binding.appLockOverlay.visibility = View.VISIBLE
+        } else {
+            binding.appLockOverlay.visibility = View.GONE
+        }
+    }
+
+    private fun setupAppLockKeypad() {
+        val keys = listOf(
+            binding.pinKey0 to "0", binding.pinKey1 to "1", binding.pinKey2 to "2",
+            binding.pinKey3 to "3", binding.pinKey4 to "4", binding.pinKey5 to "5",
+            binding.pinKey6 to "6", binding.pinKey7 to "7", binding.pinKey8 to "8",
+            binding.pinKey9 to "9"
+        )
+        keys.forEach { (button, digit) ->
+            button.setOnClickListener { onPinDigitEntered(digit) }
+        }
+
+        binding.pinKeyClear.setOnClickListener {
+            currentEnteredPin = ""
+            updatePinDotsDisplay()
+            binding.appLockErrorText.visibility = View.INVISIBLE
+        }
+
+        binding.pinKeyBack.setOnClickListener {
+            if (currentEnteredPin.isNotEmpty()) {
+                currentEnteredPin = currentEnteredPin.dropLast(1)
+                updatePinDotsDisplay()
+                binding.appLockErrorText.visibility = View.INVISIBLE
+            }
+        }
+    }
+
+    private fun onPinDigitEntered(digit: String) {
+        if (currentEnteredPin.length < 4) {
+            currentEnteredPin += digit
+            updatePinDotsDisplay()
+            binding.appLockErrorText.visibility = View.INVISIBLE
+
+            if (currentEnteredPin.length == 4) {
+                if (appLockManager.verifyAndUnlock(currentEnteredPin)) {
+                    binding.appLockOverlay.visibility = View.GONE
+                    currentEnteredPin = ""
+                    updatePinDotsDisplay()
+                } else {
+                    binding.appLockErrorText.visibility = View.VISIBLE
+                    currentEnteredPin = ""
+                    handler.postDelayed({ updatePinDotsDisplay() }, 300)
+                }
+            }
+        }
+    }
+
+    private fun updatePinDotsDisplay() {
+        val dots = when (currentEnteredPin.length) {
+            1 -> "●  ○  ○  ○"
+            2 -> "●  ●  ○  ○"
+            3 -> "●  ●  ●  ○"
+            4 -> "●  ●  ●  ●"
+            else -> "○  ○  ○  ○"
+        }
+        binding.appLockPinDots.text = dots
+    }
+
+    private fun updateEvDashboardState() {
+        val enabled = BrowserPreferences.isEvDashboardEnabled(this)
+        if (enabled) {
+            applyEvDashboardPosition()
+            binding.evDashboardWidget.visibility = View.VISIBLE
+            evTelemetryManager.start()
+        } else {
+            binding.evDashboardWidget.visibility = View.GONE
+            evTelemetryManager.stop()
+        }
+    }
+
+    private fun applyEvDashboardPosition() {
+        val position = BrowserPreferences.getEvDashboardPosition(this)
+        val params = binding.evDashboardWidget.layoutParams as android.widget.FrameLayout.LayoutParams
+        when (position) {
+            "top_left" -> params.gravity = android.view.Gravity.TOP or android.view.Gravity.START
+            "bottom_right" -> params.gravity = android.view.Gravity.BOTTOM or android.view.Gravity.END
+            "bottom_left" -> params.gravity = android.view.Gravity.BOTTOM or android.view.Gravity.START
+            else -> params.gravity = android.view.Gravity.TOP or android.view.Gravity.END
+        }
+        binding.evDashboardWidget.layoutParams = params
+    }
+
+    private fun updateEvDashboardUi(data: EvTelemetryData) {
+        val pct = data.fuelOrBatteryPercent.coerceIn(0, 100)
+        binding.evGaugeBar.progress = pct
+        val gaugeColor = when {
+            pct > 50 -> android.graphics.Color.parseColor("#00E676")
+            pct > 20 -> android.graphics.Color.parseColor("#FFD54F")
+            else -> android.graphics.Color.parseColor("#FF5252")
+        }
+        binding.evGaugeBar.setIndicatorColor(gaugeColor)
+
+        if (data.engineType == com.kododake.aabrowser.ev.VehicleEngineType.COMBUSTION) {
+            binding.evBatteryText.text = "⛽ ${pct}% (${data.rangeKm} km)"
+            binding.evPowerText.text = "⛽ ${"%.1f".format(data.powerOrConsumption)} km/L"
+        } else {
+            binding.evBatteryText.text = "🔋 ${pct}% (${data.rangeKm} km)"
+            val powerSign = if (data.powerOrConsumption >= 0) "+" else ""
+            binding.evPowerText.text = "⚡ $powerSign${"%.1f".format(data.powerOrConsumption)} kW"
+        }
+        binding.evSpeedText.text = "🚗 ${data.speedKmH.toInt()} km/h"
+        binding.evTempText.text = "🌡️ ${data.tempCelsius.toInt()} °C"
+    }
+
+    private fun setupWindowInsetsAndCoolwalk() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { _, insets ->
+            val sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            binding.root.setPadding(sysBars.left, sysBars.top, sysBars.right, sysBars.bottom)
+            insets
+        }
+    }
+
+    override fun onMultiWindowModeChanged(isInMultiWindowMode: Boolean, newConfig: android.content.res.Configuration) {
+        super.onMultiWindowModeChanged(isInMultiWindowMode, newConfig)
+        applySplitScreenLayout()
+        applyEvDashboardPosition()
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        applySplitScreenLayout()
+        applyEvDashboardPosition()
     }
 }

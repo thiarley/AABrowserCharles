@@ -122,6 +122,13 @@ fun configureWebView(
                 if (stringUrl == null) {
                     return
                 }
+
+                if (isStreamingDomain(stringUrl) && com.kododake.aabrowser.data.BrowserPreferences.isAutoDesktopStreamingEnabled(view.context)) {
+                    val currentProfile = (view.getTag(R.id.webview_user_agent_profile_tag) as? String)
+                        ?.let { UserAgentProfile.fromKey(it) } ?: UserAgentProfile.ANDROID_CHROME
+                    view.applyBrowserIdentity(currentProfile, desktop = true)
+                }
+
                 val uri = Uri.parse(stringUrl)
                 val scheme = uri.scheme?.lowercase()
 
@@ -460,3 +467,10 @@ private const val MOBILE_CHROME_UA = "Mozilla/5.0 (Linux; Android 10; K) AppleWe
 private const val WINDOWS_CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROME_VERSION} Safari/537.36"
 private const val SAFARI_MAC_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
 private const val SAFARI_IOS_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+
+fun isStreamingDomain(url: String?): Boolean {
+    if (url.isNullOrBlank()) return false
+    val host = runCatching { Uri.parse(url).host?.lowercase() }.getOrNull() ?: return false
+    val streamingHosts = listOf("netflix.com", "disneyplus.com", "primevideo.com", "amazon.com")
+    return streamingHosts.any { host == it || host.endsWith(".$it") }
+}

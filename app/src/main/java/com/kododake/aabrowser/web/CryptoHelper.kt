@@ -60,4 +60,11 @@ object CryptoHelper {
             String(decryptedBytes, Charsets.UTF_8)
         }.getOrNull()
     }
+
+    fun hashPin(pin: String): String {
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        val salted = "AABrowser_Salt_2026_$pin"
+        val hash = digest.digest(salted.toByteArray(Charsets.UTF_8))
+        return hash.joinToString("") { "%02x".format(it) }
+    }
 }

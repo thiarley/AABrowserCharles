@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name">AABrowser</string>
-    <string name="app_credit">AABrowser — by Kododake</string>
-    <string name="author_name">Kododake</string>
-    <string name="menu_title">AABrowser</string>
+    <string name="app_name">AABrowserCharlesJose</string>
+    <string name="app_credit">AABrowserCharlesJose — by Kododake &amp; CharlesJose</string>
+    <string name="author_name">Kododake &amp; CharlesJose</string>
+    <string name="menu_title">AABrowserCharlesJose</string>
     <string name="menu_close">Close</string>
     <string name="menu_address_label">Address or search</string>
     
@@ -243,4 +243,56 @@
     <string name="ssl_error_invalid">The certificate is invalid.</string>
     <string name="ssl_error_proceed">Proceed anyway (unsafe)</string>
     <string name="ssl_error_cancel">Go back to safety (recommended)</string>
+
+    <!-- Video in motion & Split screen settings -->
+    <string name="settings_video_in_motion_title">Video Playback in Motion</string>
+    <string name="settings_video_in_motion_description">Choose what happens to video playback when the vehicle is moving.</string>
+    <string name="settings_video_in_motion_continue">Continue video normally</string>
+    <string name="settings_video_in_motion_pause">Pause video (keep app open)</string>
+    <string name="settings_video_in_motion_floating_pip">Shrink video to screen corner (Mini-player)</string>
+    <string name="settings_video_in_motion_audio_only">Minimize app and keep audio only</string>
+
+    <string name="settings_split_screen_title">Split Screen (Map + YouTube)</string>
+    <string name="settings_split_screen_description">Display a map side-by-side with YouTube/Browser like YouTube Music.</string>
+    <string name="settings_split_screen_disabled">Disabled (Full Browser)</string>
+    <string name="settings_split_screen_map_left">Map on Left | Browser on Right</string>
+    <string name="settings_split_screen_browser_left">Browser on Left | Map on Right</string>
+    <string name="btn_swap_split_screen">Swap Sides</string>
+
+    <!-- Streaming Compatibility & SSL Settings -->
+    <string name="settings_streaming_title">Streaming Compatibility &amp; SSL</string>
+    <string name="settings_auto_desktop_streaming">Auto Desktop for Streaming</string>
+    <string name="settings_auto_desktop_streaming_description">Automatically use Desktop mode for Netflix, Disney+, and Prime Video to enable Web Player.</string>
+    <string name="settings_clear_ssl_exceptions">Clear Saved SSL Exceptions</string>
+    <string name="settings_clear_ssl_exceptions_description">Remove all saved SSL certificate bypass approvals.</string>
+    <string name="ssl_exceptions_cleared">Saved SSL exceptions cleared.</string>
+
+    <!-- App Lock Settings -->
+    <string name="settings_security_title">Security &amp; Privacy</string>
+    <string name="settings_app_lock">App Lock PIN</string>
+    <string name="settings_app_lock_description">Protect accounts and browser data with a 4-digit PIN when leaving your vehicle.</string>
+    <string name="settings_app_lock_set_pin">Set 4-Digit PIN</string>
+    <string name="settings_app_lock_change_pin">Change PIN</string>
+    <string name="settings_app_lock_enter_pin">Enter PIN</string>
+    <string name="settings_app_lock_confirm_pin">Confirm PIN</string>
+    <string name="settings_app_lock_invalid_pin">Incorrect PIN. Try again.</string>
+    <string name="settings_app_lock_pins_dont_match">PINs do not match. Try again.</string>
+    <string name="settings_app_lock_pin_saved">App Lock PIN saved.</string>
+    <string name="app_lock_screen_title">AABrowser Locked</string>
+    <string name="app_lock_screen_subtitle">Enter 4-digit PIN to access browser</string>
+    <string name="menu_lock_app_now">Lock App Now</string>
+
+    <!-- Vehicle Telemetry Dashboard Settings (EV & Combustion) -->
+    <string name="settings_ev_dashboard_title">Vehicle Telemetry Dashboard</string>
+    <string name="settings_ev_dashboard_toggle">Floating Telemetry Widget</string>
+    <string name="settings_ev_dashboard_description">Show real-time speed, range, fuel/battery level, and consumption for EV or Combustion vehicles.</string>
+    <string name="settings_vehicle_type">Engine Type</string>
+    <string name="vehicle_type_auto">Auto-Detect</string>
+    <string name="vehicle_type_ev">Electric (EV)</string>
+    <string name="vehicle_type_combustion">Combustion (Gasoline/Diesel/Flex)</string>
+    <string name="settings_ev_dashboard_position">Widget Position</string>
+    <string name="ev_dashboard_top_right">Top Right</string>
+    <string name="ev_dashboard_top_left">Top Left</string>
+    <string name="ev_dashboard_bottom_right">Bottom Right</string>
+    <string name="ev_dashboard_bottom_left">Bottom Left</string>
 </resources>

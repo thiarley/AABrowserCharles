@@ -35,6 +35,9 @@ class OverlayManager(
         fun onHomePageChanged()
         fun onPickBackgroundRequested()
         fun onVersionInfoReceived(latestUrl: String, tagName: String)
+        fun onVideoInMotionChanged()
+        fun onSplitScreenChanged()
+        fun onClearSslExceptions()
     }
 
     fun showQrCodeView(url: String) {
@@ -144,6 +147,16 @@ class OverlayManager(
                 },
                 onSponsorsVisibilityChanged = {
                     startPageManager.refreshStartPage()
+                },
+                onVideoInMotionChanged = {
+                    callbacks.onVideoInMotionChanged()
+                },
+                onSplitScreenChanged = {
+                    callbacks.onSplitScreenChanged()
+                },
+                onClearSslExceptions = {
+                    com.kododake.aabrowser.web.SslErrorHandlerHelper.clearAllowedSslHosts(activity)
+                    callbacks.onClearSslExceptions()
                 }
             )
             
