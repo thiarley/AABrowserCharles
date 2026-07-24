@@ -65,6 +65,8 @@ fun configureWebView(
         settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
+            @Suppress("DEPRECATION")
+            databaseEnabled = true
             mediaPlaybackRequiresUserGesture = false
             javaScriptCanOpenWindowsAutomatically = true
 
@@ -488,6 +490,9 @@ fun isStreamingDomain(url: String?): Boolean {
     val host = runCatching { Uri.parse(url).host?.lowercase() }.getOrNull() ?: return false
     val streamingHosts = listOf(
         "netflix.com",
+        "nflxext.com",
+        "nflxso.net",
+        "nflxvideo.net",
         "disneyplus.com",
         "disney-plus.net",
         "primevideo.com",
@@ -495,8 +500,7 @@ fun isStreamingDomain(url: String?): Boolean {
         "max.com",
         "crunchyroll.com",
         "apple.com",
-        "paramountplus.com",
-        "nflxext.com"
+        "paramountplus.com"
     )
     return streamingHosts.any { host == it || host.endsWith(".$it") }
 }

@@ -267,6 +267,18 @@ class TabManager(
         callbacks.onTabChanged(selectedTab)
     }
 
+    fun replaceTabWithCleanTab(tabId: Long): BrowserTab? {
+        val index = browserTabs.indexOfFirst { it.id == tabId }
+        if (index >= 0) {
+            val removedTab = browserTabs.removeAt(index)
+            callbacks.onSpeechTabClosed(removedTab.id)
+            removedTab.speechBridge.destroy()
+            binding.webViewContainer.removeView(removedTab.webView)
+            removedTab.webView.releaseCompletely()
+        }
+        return createBrowserTab(initialUrl = null, activate = true)
+    }
+
     fun closeTab(tabId: Long, onSpeechTabClosed: () -> Unit) {
         val index = browserTabs.indexOfFirst { it.id == tabId }
         if (index < 0) {

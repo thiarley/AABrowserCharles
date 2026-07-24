@@ -183,6 +183,9 @@ object BrowserPreferences {
     private fun isStreamingHost(host: String): Boolean {
         val streamingHosts = listOf(
             "netflix.com",
+            "nflxext.com",
+            "nflxso.net",
+            "nflxvideo.net",
             "disneyplus.com",
             "disney-plus.net",
             "primevideo.com",
@@ -190,8 +193,7 @@ object BrowserPreferences {
             "max.com",
             "crunchyroll.com",
             "apple.com",
-            "paramountplus.com",
-            "nflxext.com"
+            "paramountplus.com"
         )
         return streamingHosts.any { host == it || host.endsWith(".$it") }
     }

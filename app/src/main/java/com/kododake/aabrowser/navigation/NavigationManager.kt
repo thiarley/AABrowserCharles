@@ -61,10 +61,18 @@ class NavigationManager(
     }
 
     private fun navigateActiveTabTo(navigable: String, closeMenuAfterNavigate: Boolean) {
+        val isFromStartPage = startPageManager.isShowingStartPage
         var targetTab = tabManager.activeTab
-        if (targetTab == null) {
+
+        if (isFromStartPage && targetTab != null && targetTab.currentUrl.isNotBlank()) {
+            val cleanTab = tabManager.replaceTabWithCleanTab(targetTab.id)
+            if (cleanTab != null) {
+                targetTab = cleanTab
+            }
+        } else if (targetTab == null) {
             targetTab = tabManager.createNewTab(activate = true)
         }
+
         if (targetTab == null) {
             return
         }
