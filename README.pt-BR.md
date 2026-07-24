@@ -27,9 +27,10 @@
 ## 🌟 Lista Completa de Funcionalidades
 
 ### 🚗 Funcionalidades Automotivas & Condução
-* 🎬 **Compatibilidade com Streaming & Persistência SSL (Netflix, Disney+, Prime Video):**
+* 🎬 **Compatibilidade com Streaming & Persistência SSL (Prime Video, Disney+, YouTube, etc.):**
   * **Modo Desktop Automático:** Aplica o User Agent Desktop em sites de streaming para liberar os Web Players oficiais sem telas de bloqueio mobile.
   * **Propagação e Persistência de SSL:** Aprovação automática e salvamento permanente de certificados SSL para domínios e CDNs parceiras (`*.nflxext.com`, `*.disney-plus.net`, etc.).
+  * ⚠️ **Aviso de DRM da Netflix (Erro E100 / 1044):** Serviços como YouTube, Prime Video, Disney+, Max, Pluto TV e Twitch reproduzem vídeos perfeitamente em Modo Desktop. No entanto, a Netflix exige verificação estrita de DRM Widevine L1 via Hardware e EME (*Encrypted Media Extensions*), bloqueando a execução do player de vídeo dentro do `WebView` do Android (resultando no Erro E100 / 1044). A navegação pelo catálogo é suportada, mas a reprodução de vídeo é restrita pela Netflix aos aplicativos/navegadores nativos certificados.
 
 ### 🔐 Funcionalidades de Criptografia & Privacidade
 * 🔐 **Bloqueio por PIN de Segurança (*App Lock*):**
